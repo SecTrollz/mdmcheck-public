@@ -1,1 +1,1 @@
-# mdmcheck-public
+# mdmcheck-ng

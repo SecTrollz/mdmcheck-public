@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0D0D0D">
+<meta name="description" content="MDMCheck — Device management audit tool. Detect MDM, EDR, and identity management on your own devices.">
+<title>MDMCheck — Device Audit Platform</title>
+
+<!-- Google Fonts (flash.android.com uses Google Sans) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<!-- D3.js for org map -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<!-- xterm.js for terminal -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   FLASH.ANDROID.COM — MATERIAL YOU DARK PALETTE
+   Primary: Android Green #3DDC84
+   Inspired by Android Flash Tool (flash.android.com)
+═══════════════════════════════════════════════════════ */
+:root {
+  --p:        #3DDC84;
+  --p2:       #2DC870;
+  --p3:       #00A86B;
+  --p-bg:     rgba(61,220,132,.12);
+  --p-bd:     rgba(61,220,132,.28);
+  --s:        #4285F4;
+  --s-bg:     rgba(66,133,244,.12);
+  --bg:       #0D0D0D;
+  --bg2:      #181818;
+  --bg3:      #222222;
+  --bg4:      #2C2C2C;
+  --bg5:      #373737;
+  --t:        #E8EAED;
+  --t2:       #9AA0A6;
+  --t3:       #5F6368;
+  --ok:       #34A853;
+  --ok-bg:    rgba(52,168,83,.12);
+  --ok-bd:    rgba(52,168,83,.30);
+  --warn:     #FBBC04;
+  --warn-bg:  rgba(251,188,4,.10);
+  --warn-bd:  rgba(251,188,4,.28);
+  --err:      #EA4335;
+  --err-bg:   rgba(234,67,53,.12);
+  --err-bd:   rgba(234,67,53,.30);
+  --info:     #4FC3F7;
+  --info-bg:  rgba(79,195,247,.10);
+  --info-bd:  rgba(79,195,247,.28);
+  --div:      rgba(255,255,255,.07);
+  --div2:     rgba(255,255,255,.14);
+  --mono: 'Roboto Mono','Courier New',monospace;
+  --sans: 'Google Sans','Roboto',system-ui,sans-serif;
+  --r:    10px;
+  --rsm:  6px;
+  --rlg:  16px;
+  --shadow: 0 2px 16px rgba(0,0,0,.6);
+}
+:root.light {
+  --bg:#F8F9FA; --bg2:#FFFFFF; --bg3:#F1F3F4; --bg4:#E8EAED; --bg5:#D8D8D8;
+  --t:#202124;  --t2:#5F6368; --t3:#9AA0A6;
+  --div:rgba(0,0,0,.07); --div2:rgba(0,0,0,.14);
+  --p:#1B7D3E; --p2:#157035; --p3:#0A5228; --p-bg:rgba(27,125,62,.10); --p-bd:rgba(27,125,62,.25);
+  --s:#1A73E8; --s-bg:rgba(26,115,232,.10);
+  --shadow:0 2px 12px rgba(0,0,0,.15);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t);min-height:100vh;overflow-x:hidden}
+input,textarea,select{background:var(--bg3);color:var(--t);border:1px solid var(--div2);border-radius:var(--rsm);padding:8px 12px;font-family:var(--sans);font-size:13px;width:100%;transition:border-color .15s,box-shadow .15s;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--p-bg)}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+select option{background:var(--bg3)}
+a{color:var(--p);text-decoration:none}a:hover{text-decoration:underline}
+code,.mono{font-family:var(--mono);font-size:.9em}
+.mi{font-family:'Material Symbols Outlined';font-size:20px;font-style:normal;font-weight:400;line-height:1;user-select:none;vertical-align:middle}
+.mi-sm{font-size:16px}.mi-lg{font-size:24px}.mi-xl{font-size:32px}
+
+/* ── BUTTONS ── */
+button,.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;font-family:var(--sans);transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--p);color:#000}
+.btn-primary:hover{background:var(--p2);transform:translateY(-1px);box-shadow:0 4px 14px var(--p-bg)}
+.btn-secondary{background:var(--bg4);color:var(--t);border:1px solid var(--div2)}
+.btn-secondary:hover{background:var(--bg5)}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--div2)}
+.btn-ghost:hover{background:var(--bg3);color:var(--t)}
+.btn-danger{background:var(--err-bg);color:var(--err);border:1px solid var(--err-bd)}
+.btn-danger:hover{background:var(--err);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:var(--rsm)}
+.btn-lg{padding:13px 28px;font-size:15px;font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--div);border-radius:var(--rlg);padding:20px;margin-bottom:16px}
+.card-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat-card{flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--div);border-radius:var(--rlg);padding:16px;text-align:center}
+.stat-val{font-size:28px;font-weight:300;color:var(--p);line-height:1.1}
+.stat-lbl{font-size:11px;color:var(--t3);margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+.card-title{font-size:15px;font-weight:600;color:var(--t);display:flex;align-items:center;gap:8px}
+.card-sub{font-size:12px;color:var(--t2);margin-top:6px;line-height:1.6}
+
+/* ── ALERTS ── */
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r);border:1px solid;align-items:flex-start;margin-bottom:12px;line-height:1.6;font-size:13px}
+.alert-ok   {background:var(--ok-bg);  border-color:var(--ok-bd);  color:var(--ok)}
+.alert-warn {background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn)}
+.alert-err  {background:var(--err-bg); border-color:var(--err-bd); color:var(--err)}
+.alert-info {background:var(--info-bg);border-color:var(--info-bd);color:var(--info)}
+.alert-p    {background:var(--p-bg);   border-color:var(--p-bd);   color:var(--p)}
+.alert-critical{background:rgba(200,0,0,.12);border-color:rgba(200,0,0,.35);color:#FF6B6B}
+.alert-high {background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn)}
+
+/* ── FINDINGS ── */
+.finding-card{border-radius:var(--r);border:1px solid var(--div2);margin-bottom:8px;overflow:hidden;cursor:pointer}
+.finding-card.sev-CRITICAL{border-color:rgba(200,0,0,.4);background:rgba(200,0,0,.06)}
+.finding-card.sev-HIGH    {border-color:rgba(251,188,4,.4);background:rgba(251,188,4,.06)}
+.finding-card.sev-MEDIUM  {border-color:rgba(79,195,247,.3);background:rgba(79,195,247,.06)}
+.finding-card.sev-OK      {border-color:var(--ok-bd);background:var(--ok-bg)}
+.finding-card.sev-INFO    {border-color:var(--div2);background:var(--bg3)}
+.finding-hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:12px;font-weight:500}
+.finding-body{display:none;padding:10px 12px;border-top:1px solid var(--div);font-size:12px;color:var(--t2);line-height:1.7}
+.finding-body.open{display:block}
+.finding-evidence{font-family:var(--mono);font-size:10px;background:var(--bg3);border-radius:var(--rsm);padding:8px;margin-top:8px;white-space:pre-wrap;word-break:break-all;color:var(--warn)}
+.finding-title{flex:1;font-weight:500}
+.sev-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em}
+.sev-CRITICAL{background:rgba(200,0,0,.22);color:#FF6B6B}
+.sev-HIGH    {background:rgba(251,188,4,.18);color:var(--warn)}
+.sev-MEDIUM  {background:rgba(79,195,247,.15);color:var(--info)}
+.sev-OK      {background:var(--ok-bg);color:var(--ok)}
+.sev-INFO    {background:var(--bg4);color:var(--t2)}
+
+/* ── LAYOUT ── */
+#app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+#sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--bg2);border-right:1px solid var(--div);display:flex;flex-direction:column}
+#main{display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--bg2);border-bottom:1px solid var(--div);padding:0 20px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;flex-shrink:0}
+#content-wrap{flex:1;overflow-y:auto;padding:20px}
+#content{max-width:1100px}
+
+/* ── SIDEBAR ── */
+.sidebar-logo{padding:18px 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--div)}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--p),var(--p3));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:12px 8px 4px}
+.nav-link{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r);color:var(--t2);cursor:pointer;font-size:13px;font-weight:400;transition:all .13s;user-select:none;border:none;background:none;width:100%;text-align:left}
+.nav-link:hover{background:var(--bg3);color:var(--t)}
+.nav-link.active{background:var(--p-bg);color:var(--p);font-weight:500}
+.nav-link .mi{font-size:18px;flex-shrink:0}
+.nav-link .nav-badge{margin-left:auto;font-size:10px;font-weight:600;background:var(--err);color:#fff;border-radius:10px;padding:1px 6px}
+.sidebar-user{padding:12px 16px;border-top:1px solid var(--div);display:flex;align-items:center;gap:10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#000;flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-info{flex:1;overflow:hidden}
+.user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;padding:4px;background:var(--bg3);border-radius:var(--r);margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:7px 14px;border-radius:var(--rsm);border:none;background:none;color:var(--t2);font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:400;transition:all .13s}
+.tab.active{background:var(--bg2);color:var(--t);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:8px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);border-bottom:1px solid var(--div);white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--div);vertical-align:top;color:var(--t2)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg3)}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--div)}
+
+/* ── GRID ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.form-row{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-row label{font-size:12px;font-weight:500;color:var(--t2)}
+
+/* ── MODULE CARDS ── */
+.module-card{background:var(--bg2);border:1px solid var(--div);border-radius:var(--rlg);padding:18px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:8px}
+.module-card:hover{border-color:var(--p-bd);background:var(--p-bg);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.mc-icon{width:44px;height:44px;background:var(--p-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--p-bd)}
+.mc-icon .mi{color:var(--p);font-size:22px}
+.mc-title{font-size:14px;font-weight:600}
+.mc-desc{font-size:11px;color:var(--t2);line-height:1.5;flex:1}
+
+/* ── SCAN PROGRESS ── */
+.probe-bar-bg{height:4px;background:var(--bg4);border-radius:4px;margin:8px 0}
+.probe-bar{height:4px;background:linear-gradient(90deg,var(--p),var(--s));border-radius:4px;width:0%;transition:width .15s}
+.probe-log{font-family:var(--mono);font-size:10px;color:var(--t3);max-height:140px;overflow-y:auto;padding:4px 0;line-height:1.7}
+.probe-log .hit{color:var(--p)} .probe-log .err{color:var(--err)} .probe-log .probe{color:var(--t3)}
+
+/* ── LOADING ── */
+.loading{display:flex;align-items:center;gap:10px;color:var(--t2);padding:20px 0;font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:20px;height:20px;border:2px solid var(--div2);border-top-color:var(--p);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+
+/* ── TOPBAR ── */
+#topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--div2);color:var(--t2)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal-box{background:var(--bg2);border:1px solid var(--div2);border-radius:var(--rlg);padding:28px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow)}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.modal-close{margin-left:auto;background:none;border:none;color:var(--t2);cursor:pointer;padding:4px}
+
+/* ── FBI WARNING (modal overlay) ── */
+#modal-fbi{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--mono)}
+#modal-fbi-box{background:#0A0000;border:1px solid #550000;border-radius:var(--rlg);padding:28px 32px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 48px rgba(200,0,0,.35);text-align:center}
+.fbi-seal{width:72px;height:72px;border:3px solid #AA0000;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px}
+.fbi-header{font-size:10px;letter-spacing:.3em;color:#AA0000;text-transform:uppercase;margin-bottom:10px}
+.fbi-title{font-size:20px;font-weight:900;color:#FF2222;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.fbi-sub{font-size:11px;color:#FF4444;margin-bottom:16px}
+.fbi-box{border:1px solid #770000;border-radius:var(--r);padding:14px;background:rgba(200,0,0,.05);font-size:11px;color:#FF6666;line-height:1.9;margin-bottom:18px;text-align:left}
+.fbi-ack{background:#CC0000;color:#fff;border:none;padding:12px 28px;font-size:12px;font-weight:700;letter-spacing:.12em;border-radius:var(--r);cursor:pointer;font-family:var(--mono);text-transform:uppercase;transition:background .15s}
+.fbi-ack:hover{background:#FF2222}
+.fbi-meta{margin-top:10px;font-size:9px;color:#550000;font-family:var(--mono)}
+
+/* ── LANDING / AUTH SCREEN ── */
+#screen-landing{min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+.landing-nav{padding:14px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--div)}
+.landing-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;max-width:720px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;background:var(--p-bg);border:1px solid var(--p-bd);font-size:11px;font-weight:600;color:var(--p);letter-spacing:.04em;margin-bottom:24px;text-transform:uppercase}
+.hero-title{font-size:clamp(32px,6vw,54px);font-weight:900;line-height:1.1;letter-spacing:-.02em;margin-bottom:16px}
+.hero-title span{color:var(--p)}
+.hero-desc{font-size:16px;color:var(--t2);line-height:1.7;max-width:540px;margin-bottom:36px}
+.auth-card{background:var(--bg2);border:1px solid var(--div);border-radius:var(--rlg);padding:28px;max-width:420px;width:100%;margin:0 auto}
+.auth-title{font-size:16px;font-weight:600;margin-bottom:6px;text-align:center}
+.auth-sub{font-size:12px;color:var(--t2);text-align:center;margin-bottom:20px;line-height:1.6}
+.oauth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 16px;border-radius:var(--r);border:1px solid var(--div2);background:var(--bg3);color:var(--t);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .15s;margin-bottom:8px;text-decoration:none}
+.oauth-btn:hover{background:var(--bg4);border-color:var(--div2);transform:translateY(-1px)}
+.oauth-btn svg{width:18px;height:18px;flex-shrink:0}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--t3);font-size:11px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--div)}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:40px;text-align:left}
+.feature-item{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--div)}
+.feature-icon{width:32px;height:32px;border-radius:8px;background:var(--p-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.feature-icon .mi{color:var(--p);font-size:16px}
+.pledge-section{background:var(--p-bg);border:1px solid var(--p-bd);border-radius:var(--rlg);padding:20px;margin-top:40px;text-align:left}
+
+/* ── FOOTER ── */
+.app-footer{padding:14px 20px;border-top:1px solid var(--div);font-size:11px;color:var(--t3);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.app-footer a{color:var(--t3)}.app-footer a:hover{color:var(--p)}
+
+/* ── ORG MAP ── */
+#orgmap-svg{width:100%;border-radius:var(--rlg);background:var(--bg2);border:1px solid var(--div)}
+.org-node{cursor:pointer}
+.org-link{stroke:var(--div2);stroke-width:1.5px}
+.org-label{font-size:11px;fill:var(--t2);pointer-events:none}
+.org-tooltip{position:absolute;background:var(--bg3);border:1px solid var(--div2);border-radius:var(--rsm);padding:8px 12px;font-size:11px;pointer-events:none;max-width:220px;z-index:100;line-height:1.6}
+
+/* ── TERMINAL ── */
+#xterm-container{background:#000;border-radius:var(--r);padding:8px;border:1px solid var(--div2);min-height:300px}
+#xterm-container .xterm{height:280px}
+
+/* ── DV VICTIM MODE ── */
+.dv-mode #sidebar .logo-icon{background:linear-gradient(135deg,#7B2D8B,#C04080)}
+.dv-mode .nav-link.active{background:rgba(123,45,139,.15);color:#C880FF}
+.dv-mode #topbar{background:rgba(123,45,139,.08)}
+.dv-mode .hero-title span,.dv-mode .stat-val{color:#C880FF}
+.dv-help-banner{background:rgba(123,45,139,.12);border:1px solid rgba(192,64,128,.3);border-radius:var(--r);padding:14px;margin-bottom:16px;font-size:12px;color:#D89AFF;line-height:1.7}
+.dv-emergency{background:#7B2D8B;color:#fff;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.8}}
+
+/* ── SCAN EVIDENCE ── */
+.evidence-chain{font-family:var(--mono);font-size:10px;color:var(--t3);line-height:1.8;border-left:2px solid var(--p-bd);padding-left:12px;margin-top:12px}
+.evidence-chain .chain-entry{display:flex;gap:8px;margin-bottom:4px}
+.evidence-chain .chain-hash{color:var(--p);flex-shrink:0}
+
+/* ── SCAN COUNTER BADGE ── */
+.scan-counter-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--p-bg);border:1px solid var(--p-bd);font-size:12px;font-weight:600;color:var(--p);font-family:var(--mono)}
+@keyframes ripple{0%{transform:scale(1);opacity:.8}100%{transform:scale(2);opacity:0}}
+.scanning-dot{width:8px;height:8px;border-radius:50%;background:var(--p);display:inline-block;position:relative}
+.scanning-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--p);animation:ripple 1.2s ease-out infinite}
+
+/* ── FIRMWARE PAGE ── */
+.fw-card{background:linear-gradient(135deg,var(--bg2) 0%,rgba(61,220,132,.06) 100%);border:1px solid var(--p-bd);border-radius:var(--rlg);padding:20px;display:flex;align-items:flex-start;gap:16px;margin-bottom:12px;cursor:pointer;transition:all .15s}
+.fw-card:hover{border-color:var(--p);transform:translateY(-2px)}
+.fw-icon{width:52px;height:52px;background:var(--p-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fw-icon .mi{color:var(--p);font-size:26px}
+
+/* ── MEDIA ── */
+@media(max-width:768px){
+  #app{grid-template-columns:1fr}
+  #sidebar{display:none}
+  #mobile-nav{display:flex}
+  .grid2,.grid3{grid-template-columns:1fr}
+}
+#mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--div);z-index:20;padding:0 4px;padding-bottom:env(safe-area-inset-bottom)}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px;border:none;background:none;color:var(--t3);font-size:9px;cursor:pointer;font-family:var(--sans);gap:2px;transition:color .13s}
+.mn-item.active,.mn-item:hover{color:var(--p)}
+.mn-item .mi{font-size:22px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     FBI EMERGENCY WARNING — Appears before all content
+═══════════════════════════════════════════════════ -->
+<div id="modal-fbi" role="alertdialog" aria-modal="true" aria-label="Federal Warning">
+  <div id="modal-fbi-box">
+    <div class="fbi-seal">⚖️</div>
+    <div class="fbi-header">United States Government &nbsp;·&nbsp; Federal Notice</div>
+    <div class="fbi-title">⚠ Federal Law Enforcement Notice ⚠</div>
+    <div class="fbi-sub">MDMCheck &nbsp;·&nbsp; Device Audit Platform &nbsp;·&nbsp; Active Monitoring System</div>
+    <div class="fbi-box">
+      THIS PLATFORM IS ACTIVELY MONITORED. FORENSIC SESSION LOGS ARE MAINTAINED AND PRESERVED.<br><br>
+      UNAUTHORIZED SCANNING OF DEVICES, DOMAINS, OR ACCOUNTS YOU DO NOT OWN IS A FEDERAL CRIME
+      PUNISHABLE UNDER 18 U.S.C. § 1030 (CFAA), 18 U.S.C. § 2511 (ECPA), AND RELATED STATE AND
+      INTERNATIONAL STATUTES. VIOLATIONS MAY RESULT IN CRIMINAL PROSECUTION AND CIVIL LIABILITY.<br><br>
+      EVERY SESSION IS LOGGED WITH: IP ADDRESS · BROWSER FINGERPRINT · CANVAS FINGERPRINT ·
+      GEOLOCATION · DEVICE CHARACTERISTICS · TIMESTAMP-CHAINED ACCESS LOG.<br><br>
+      THIS PLATFORM WILL COOPERATE FULLY WITH ANY AUTHORIZED LAW ENFORCEMENT REQUEST.
+      MISUSE WILL RESULT IN REFERRAL TO THE FBI INTERNET CRIME COMPLAINT CENTER (ic3.gov),
+      YOUR LOCAL FIELD OFFICE, AND RELEVANT INTERNATIONAL AUTHORITIES.<br><br>
+      BY CONTINUING, YOU AFFIRM UNDER PENALTY OF PERJURY THAT YOU ARE USING THIS TOOL
+      ONLY ON DEVICES AND ACCOUNTS YOU PERSONALLY OWN OR HAVE EXPLICIT WRITTEN AUTHORIZATION TO ACCESS.
+    </div>
+    <button class="fbi-ack" onclick="ackFBI()">
+      I Understand and Acknowledge This Warning — Proceed
+    </button>
+    <div class="fbi-meta">
+      Session: <span id="fbi-sid">—</span> &nbsp;|&nbsp; Timestamp: <span id="fbi-ts">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     APP SHELL (hidden until FBI ack + auth)
+═══════════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><span class="mi" style="color:#000;font-size:20px">shield</span></div>
+      <div>
+        <div style="font-size:14px;font-weight:700;letter-spacing:-.01em">MDMCheck</div>
+        <div style="font-size:10px;color:var(--t3)">v14.0 — Device Audit</div>
+      </div>
+      <button id="sidebar-theme" onclick="toggleTheme()" class="btn-ghost btn-sm" style="margin-left:auto;padding:6px" title="Toggle theme">
+        <span class="mi mi-sm" id="theme-icon">light_mode</span>
+      </button>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <button class="nav-link" id="nav-home" onclick="nav('home')"><span class="mi">home</span>Dashboard</button>
+
+      <div class="nav-section">Network Audit</div>
+      <button class="nav-link" id="nav-scan" onclick="nav('scan')"><span class="mi">radar</span>MDM Scanner</button>
+      <button class="nav-link" id="nav-dns" onclick="nav('dns')"><span class="mi">dns</span>DNS Check</button>
+      <button class="nav-link" id="nav-lookup" onclick="nav('lookup')"><span class="mi">manage_search</span>Tenant Lookup</button>
+
+      <div class="nav-section">Device Forensics</div>
+      <button class="nav-link" id="nav-forensic" onclick="nav('forensic')"><span class="mi">biotech</span>Deep Device Scan</button>
+      <button class="nav-link" id="nav-dual" onclick="nav('dual')"><span class="mi">compare_arrows</span>Hidden vs Visible</button>
+      <button class="nav-link" id="nav-bridge" onclick="nav('bridge')"><span class="mi">usb</span>Device Bridge</button>
+
+      <div class="nav-section">Evidence</div>
+      <button class="nav-link" id="nav-devices" onclick="nav('devices')"><span class="mi">devices</span>My Devices</button>
+      <button class="nav-link" id="nav-audits" onclick="nav('audits')"><span class="mi">folder_open</span>Uploaded Files</button>
+      <button class="nav-link" id="nav-probes" onclick="nav('probes')"><span class="mi">terminal</span>Scan Scripts</button>
+
+      <div class="nav-section">Legal</div>
+      <button class="nav-link" id="nav-disclosure" onclick="nav('disclosure')"><span class="mi">mail</span>DSAR Letters</button>
+      <button class="nav-link" id="nav-tracker" onclick="nav('tracker')"><span class="mi">schedule</span>Deadline Tracker</button>
+      <button class="nav-link" id="nav-bundle" onclick="nav('bundle')"><span class="mi">inventory_2</span>Export Evidence</button>
+
+      <div class="nav-section">Tools</div>
+      <button class="nav-link" id="nav-orgmap" onclick="nav('orgmap')"><span class="mi">account_tree</span>Org Map</button>
+      <button class="nav-link" id="nav-firmware" onclick="nav('firmware')"><span class="mi">system_update</span>Firmware</button>
+      <button class="nav-link" id="nav-history" onclick="nav('history')"><span class="mi">history</span>Scan History</button>
+      <button class="nav-link" id="nav-journal" onclick="nav('journal')"><span class="mi">receipt_long</span>Activity Log</button>
+      <button class="nav-link" id="nav-tos" onclick="nav('tos')"><span class="mi">gavel</span>Terms of Service</button>
+    </div>
+
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-name">Guest</div>
+        <div class="user-email" id="sidebar-email">Not signed in</div>
+      </div>
+      <button class="btn-ghost btn-sm" onclick="doLogout()" id="logout-btn" style="padding:4px" title="Sign out">
+        <span class="mi mi-sm">logout</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div id="main">
+    <div id="topbar">
+      <button class="btn-ghost btn-sm" onclick="toggleSidebar()" style="display:none" id="menu-btn">
+        <span class="mi">menu</span>
+      </button>
+      <div id="topbar-title">Dashboard</div>
+      <div class="topbar-chip" id="topbar-status">
+        <span class="scanning-dot" style="background:var(--ok)"></span>
+        <span id="status-text">Ready</span>
+      </div>
+      <div class="topbar-chip" id="topbar-session" style="display:none">
+        <span class="mi mi-sm" style="color:var(--p)">verified_user</span>
+        <span id="topbar-user-name">—</span>
+      </div>
+      <button class="btn-ghost btn-sm" onclick="nav('bundle')"><span class="mi">inventory_2</span></button>
+    </div>
+
+    <div id="content-wrap">
+      <div id="content"></div>
+    </div>
+
+    <footer class="app-footer">
+      <span>© sectrollz · MDMCheck v14.0</span>
+      <a href="mailto:IllegalDeviceManagementPool@gmail.com">IllegalDeviceManagementPool@gmail.com</a>
+      <a href="https://github.com/sectrollz" target="_blank" rel="noopener">github.com/sectrollz</a>
+      <span style="margin-left:auto" id="footer-session"></span>
+    </footer>
+  </div>
+
+  <!-- MOBILE NAV -->
+  <div id="mobile-nav">
+    <button class="mn-item" id="mn-home" onclick="nav('home')"><span class="mi">home</span>Home</button>
+    <button class="mn-item" id="mn-scan" onclick="nav('scan')"><span class="mi">radar</span>Scan</button>
+    <button class="mn-item" id="mn-forensic" onclick="nav('forensic')"><span class="mi">biotech</span>Forensic</button>
+    <button class="mn-item" id="mn-disclosure" onclick="nav('disclosure')"><span class="mi">mail</span>DSAR</button>
+    <button class="mn-item" id="mn-bundle" onclick="nav('bundle')"><span class="mi">inventory_2</span>Export</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     LANDING / AUTH SCREEN
+═══════════════════════════════════════════════════ -->
+<div id="screen-landing" style="display:flex;flex-direction:column">
+  <nav class="landing-nav">
+    <div class="logo-icon"><span class="mi" style="color:#000">shield</span></div>
+    <span style="font-size:15px;font-weight:700">MDMCheck</span>
+    <span style="font-size:11px;color:var(--t3);margin-left:4px">v14.0</span>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button onclick="toggleTheme()" class="btn-ghost btn-sm"><span class="mi mi-sm" id="theme-icon-landing">light_mode</span></button>
+      <button onclick="dvMode()" class="btn-ghost btn-sm" style="color:var(--t3);font-size:11px">I need urgent help →</button>
+    </div>
+  </nav>
+
+  <div class="landing-hero" style="padding-top:60px">
+    <div class="hero-badge"><span class="mi mi-sm">verified_user</span>Zero False Positives &nbsp;·&nbsp; Court-Ready Evidence</div>
+    <h1 class="hero-title">Is Your Device<br>Being <span>Managed?</span></h1>
+    <p class="hero-desc">MDMCheck runs 40+ forensic probes against Apple DEP, Microsoft Intune, Samsung Knox, and 18 other MDM/EDR platforms — detecting unauthorized device management in real time.</p>
+
+    <div class="auth-card">
+      <div class="auth-title">Sign in to MDMCheck</div>
+      <div class="auth-sub">Sign in to save results, track deadlines, and export court-ready evidence files.</div>
+
+      <a href="/api/auth/google" class="oauth-btn" onclick="return handleOAuthLink(event)">
+        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </a>
+      <a href="/api/auth/microsoft" class="oauth-btn" onclick="return handleOAuthLink(event)">
+        <svg viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
+        Continue with Microsoft
+      </a>
+      <a href="/api/auth/github" class="oauth-btn" onclick="return handleOAuthLink(event)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        Continue with GitHub
+      </a>
+
+      <div class="auth-divider">or</div>
+
+      <button onclick="guestLogin()" class="btn-secondary" style="width:100%;justify-content:center">
+        <span class="mi mi-sm">person_outline</span> Continue as Guest (local only)
+      </button>
+
+      <div style="margin-top:16px;font-size:10px;color:var(--t3);text-align:center;line-height:1.7">
+        By continuing you agree to the <a href="#" onclick="showTosModal()" style="color:var(--t2)">Terms of Service</a>.
+        All network probes contact third-party MDM infrastructure by design.
+      </div>
+    </div>
+
+    <div class="pledge-section" style="max-width:680px;width:100%">
+      <div style="font-size:13px;font-weight:600;color:var(--p);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        <span class="mi mi-sm">verified</span> The MDMCheck Pledge
+      </div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.8">
+        Zero false positives — every finding requires HTTP 200 + platform-specific body pattern match. <br>
+        Zero data collection — scans run server-side and client-side; results belong to you. <br>
+        Zero vendor relationships — we are not affiliated with Apple, Microsoft, Google, Samsung, or any MDM vendor.
+      </div>
+    </div>
+
+    <div class="feature-grid" style="max-width:720px;width:100%;margin-top:28px">
+      <div class="feature-item"><div class="feature-icon"><span class="mi">radar</span></div><div><div style="font-size:12px;font-weight:600">40+ MDM Probes</div><div style="font-size:11px;color:var(--t2)">Apple, Intune, Knox, Jamf, Okta, and 18 more</div></div></div>
+      <div class="feature-item"><div class="feature-icon"><span class="mi">gavel</span></div><div><div style="font-size:12px;font-weight:600">12 Legal Templates</div><div style="font-size:11px;color:var(--t2)">GDPR, CCPA, FBI IC3, Apple, Google, Microsoft</div></div></div>
+      <div class="feature-item"><div class="feature-icon"><span class="mi">biotech</span></div><div><div style="font-size:12px;font-weight:600">6 Forensic Modules</div><div style="font-size:11px;color:var(--t2)">Device owner, certs, proxies, zero-touch, ADB keys</div></div></div>
+      <div class="feature-item"><div class="feature-icon"><span class="mi">inventory_2</span></div><div><div style="font-size:12px;font-weight:600">Court-Ready Export</div><div style="font-size:11px;color:var(--t2)">SHA-256 chained evidence log, PDF/HTML export</div></div></div>
+    </div>
+  </div>
+
+  <footer class="app-footer" style="border-top:1px solid var(--div)">
+    <span>© sectrollz · MDMCheck v14.0</span>
+    <a href="mailto:IllegalDeviceManagementPool@gmail.com">IllegalDeviceManagementPool@gmail.com</a>
+    <a href="https://github.com/sectrollz" target="_blank" rel="noopener">github.com/sectrollz</a>
+  </footer>
+</div>
+
+<!-- TOS MODAL -->
+<div id="tos-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-title"><span class="mi">gavel</span>Terms of Service — MDMCheck v14.0<button class="modal-close" onclick="document.getElementById('tos-modal').style.display='none'"><span class="mi">close</span></button></div>
+    <div id="tos-modal-content" style="font-size:12px;color:var(--t2);line-height:1.8"></div>
+  </div>
+</div>
+
+<!-- DV VICTIM MODAL -->
+<div id="dv-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="border-color:rgba(192,64,128,.3);background:rgba(26,10,26,.95);max-width:520px">
+    <div class="modal-title" style="color:#D89AFF"><span class="mi">favorite</span>Confidential Support</div>
+    <div style="font-size:13px;color:#C880FF;margin-bottom:16px;line-height:1.8">
+      You are safe here. This tool can help you document evidence of unauthorized device monitoring for use with advocates, attorneys, and law enforcement.
+    </div>
+    <div class="dv-help-banner">
+      <b>National DV Hotline:</b> 1-800-799-SAFE (7233) · Text START to 88788<br>
+      <b>Safety planning:</b> thehotline.org/plan-for-safety/tech-safety<br>
+      <b>Cyber-stalking/tech abuse:</b> nnedv.org/resources/safetynet
+    </div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.8">
+      <b>How MDMCheck helps:</b><br>
+      • Document MDM/tracking software on devices you own<br>
+      • Generate GDPR/CCPA data requests to get records<br>
+      • Export SHA-256 chained evidence for court<br>
+      • All processing is local — nothing is shared without your consent
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:20px">
+      Quick-exit tip: Press Escape or click anywhere outside this box to close immediately. Press Ctrl+W to close this browser tab.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="enableDVMode()" style="background:#7B2D8B;color:#fff;border:none;padding:10px 18px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;font-family:var(--sans)">Enable Confidential Mode</button>
+      <button onclick="document.getElementById('dv-modal').style.display='none'" class="btn-ghost btn-sm">Close</button>
+      <a href="https://www.thehotline.org" target="_blank" rel="noopener" class="btn-ghost btn-sm">Get Help Now ↗</a>
+    </div>
+  </div>
+</div>
+
+<div id="org-tooltip" class="org-tooltip" style="display:none"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════
+   CONFIGURATION
+═══════════════════════════════════════════════════════ */
+const API_BASE = '/api';
+const VERSION  = '14.0';
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+const S = {
+  devices:[], audits:[], journal:[], dispatches:[], findings:[], scanHistory:[],
+  dualState:{ phaseA:{}, phaseB:{}, discrepancies:[] },
+  scanState:{ running:false, log:[], findings:[], summary:{} },
+  currentPage:'home',
+  user: null,
+  fpId: null,
+  sessionToken: null,
+  dvMode: false,
+};
+
+/* ═══════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════ */
+const uid  = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36);
+const now  = () => new Date().toISOString();
+const nowMs= () => Date.now();
+const esc  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+function fmtDate(ts){try{return new Date(ts).toLocaleString();}catch{return String(ts||'');}}
+function download(name, content, mime='text/plain'){
+  const url=URL.createObjectURL(new Blob([content],{type:mime}));
+  const a=document.createElement('a');a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function save(){try{localStorage.setItem('mdmcheck_state',JSON.stringify({devices:S.devices,audits:S.audits,journal:S.journal.slice(-500),dispatches:S.dispatches,findings:S.findings.slice(-200),scanHistory:S.scanHistory.slice(-50)}));}catch{}}
+function load(){try{const d=JSON.parse(localStorage.getItem('mdmcheck_state')||'{}');Object.assign(S,d);}catch{}}
+const _rl={};
+function rl(key,windowMs=3600000){const t=Date.now();if(_rl[key]&&t-_rl[key]<windowMs)return true;_rl[key]=t;return false;}
+function journalAppend(type,data={}){S.journal.push({id:uid(),ts:now(),type,...data});save();}
+function sev(s){const m={CRITICAL:'sev-CRITICAL',HIGH:'sev-HIGH',MEDIUM:'sev-MEDIUM',OK:'sev-OK',INFO:'sev-INFO'};return `<span class="sev-badge ${m[s]||'sev-INFO'}">${esc(s)}</span>`;}
+function sevIcon(s){const m={CRITICAL:'error',HIGH:'warning',MEDIUM:'info',OK:'check_circle',INFO:'info'};const c={CRITICAL:'var(--err)',HIGH:'var(--warn)',MEDIUM:'var(--info)',OK:'var(--ok)',INFO:'var(--t3)'};return `<span class="mi" style="color:${c[s]||c.INFO};flex-shrink:0">${m[s]||'info'}</span>`;}
+
+/* ═══════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════ */
+let _dark = true;
+function toggleTheme(){
+  _dark=!_dark;
+  document.documentElement.classList.toggle('light',!_dark);
+  const ic=_dark?'light_mode':'dark_mode';
+  ['theme-icon','theme-icon-landing'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=ic;});
+  try{localStorage.setItem('mdmcheck_theme',_dark?'dark':'light');}catch{}
+}
+try{if(localStorage.getItem('mdmcheck_theme')==='light'){_dark=false;document.documentElement.classList.add('light');}}catch{}
+
+/* ═══════════════════════════════════════════════════════
+   CANVAS FINGERPRINTING
+═══════════════════════════════════════════════════════ */
+async function collectFingerprint(){
+  const fp={};
+  // Canvas hash
+  try{
+    const c=document.createElement('canvas');c.width=200;c.height=50;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#f60';ctx.fillRect(0,0,200,50);
+    ctx.fillStyle='#069';ctx.font='16px Arial';ctx.fillText('MDMCheck🔒',10,30);
+    ctx.strokeStyle='rgba(102,204,0,.7)';ctx.strokeRect(1,1,198,48);
+    fp.canvas=await sha256(c.toDataURL());
+  }catch{}
+  // WebGL hash
+  try{
+    const c2=document.createElement('canvas');const gl=c2.getContext('webgl');
+    if(gl){const r=gl.getParameter(gl.RENDERER),v=gl.getParameter(gl.VENDOR);fp.webgl=await sha256(r+'|'+v);}
+  }catch{}
+  // Audio hash
+  try{
+    const ac=new OfflineAudioContext(1,4410,44100);
+    const osc=ac.createOscillator();const comp=ac.createDynamicsCompressor();
+    osc.connect(comp);comp.connect(ac.destination);osc.start(0);
+    const buf=await ac.startRendering();
+    fp.audio=await sha256(Array.from(buf.getChannelData(0).slice(0,100)).join(','));
+  }catch{}
+  fp.ua=navigator.userAgent;
+  fp.langs=navigator.languages?.join(',');
+  fp.tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  fp.platform=navigator.platform;
+  fp.memory=navigator.deviceMemory;
+  fp.cores=navigator.hardwareConcurrency;
+  fp.screen=`${screen.width}x${screen.height}`;
+  fp.depth=screen.colorDepth;
+  fp.touch=navigator.maxTouchPoints;
+  return fp;
+}
+
+async function sha256(str){
+  if(!crypto.subtle) return str.length.toString();
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function sendFingerprint(){
+  try{
+    const fp=await collectFingerprint();
+    const res=await fetch(`${API_BASE}/fingerprint`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',...apiHeaders()},
+      body:JSON.stringify(fp),
+    });
+    if(res.ok){const j=await res.json();S.fpId=j.id;}
+  }catch{}
+}
+
+/* ═══════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════ */
+function apiHeaders(){
+  const h={'Content-Type':'application/json'};
+  if(S.sessionToken) h['X-Session-Token']=S.sessionToken;
+  if(S.fpId) h['X-FP-Id']=S.fpId;
+  return h;
+}
+
+let _hasBackend=false;
+async function checkAuth(){
+  try{
+    const r=await fetch(`${API_BASE}/session`,{headers:apiHeaders()});
+    if(!r.ok) return null;
+    _hasBackend=true;
+    const j=await r.json();
+    return j.authenticated ? j.user : null;
+  }catch{ return null; }
+}
+
+async function doLogout(){
+  try{ await fetch(`${API_BASE}/logout`,{method:'POST',headers:apiHeaders()}); }catch{}
+  S.user=null;S.sessionToken=null;
+  document.cookie='mdm_session=; Max-Age=0; Path=/';
+  showLanding();
+}
+
+function guestLogin(){
+  S.user={ name:'Guest', email:'guest@local', avatar:null };
+  updateUserUI();
+  showApp();
+  journalAppend('auth.guest',{});
+  sendFingerprint();
+}
+
+function updateUserUI(){
+  if(!S.user) return;
+  const el=document.getElementById('sidebar-name');if(el)el.textContent=S.user.name||'User';
+  const ee=document.getElementById('sidebar-email');if(ee)ee.textContent=S.user.email||'';
+  const av=document.getElementById('sidebar-avatar');
+  if(av){
+    if(S.user.avatar) av.innerHTML=`<img src="${esc(S.user.avatar)}" alt="avatar">`;
+    else av.textContent=(S.user.name||'?').charAt(0).toUpperCase();
+  }
+  const tn=document.getElementById('topbar-user-name');if(tn)tn.textContent=S.user.name||'User';
+  const ts=document.getElementById('topbar-session');if(ts)ts.style.display='flex';
+  const lb=document.getElementById('logout-btn');if(lb)lb.style.display=S.user.email==='guest@local'?'none':'';
+  const fe=document.getElementById('footer-session');if(fe)fe.textContent=S.user.email||'';
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN ROUTING
+═══════════════════════════════════════════════════════ */
+function showLanding(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('screen-landing').style.display='flex';
+  document.getElementById('screen-landing').style.flexDirection='column';
+}
+function showApp(){
+  document.getElementById('screen-landing').style.display='none';
+  document.getElementById('app').style.display='grid';
+  nav('home');
+}
+
+/* ═══════════════════════════════════════════════════════
+   FBI WARNING
+═══════════════════════════════════════════════════════ */
+function ackFBI(){
+  document.getElementById('modal-fbi').style.display='none';
+  journalAppend('session.fbi_ack',{});
+  // Check auth state after acknowledgement
+  (async()=>{
+    // Check URL for auth result
+    const p=new URLSearchParams(location.search);
+    if(p.get('auth')==='ok'){
+      const user=await checkAuth();
+      if(user){S.user=user;updateUserUI();showApp();}
+      else showLanding();
+      history.replaceState({},'','/');
+      return;
+    }
+    const user=await checkAuth();
+    if(user){S.user=user;updateUserUI();sendFingerprint();showApp();}
+    else showLanding();
+  })();
+}
+
+// Init FBI warning
+window.addEventListener('DOMContentLoaded',()=>{
+  load();
+  handleResize();
+  const sid=uid();
+  const el=document.getElementById('fbi-sid');if(el)el.textContent=sid.slice(0,18).toUpperCase();
+  const el2=document.getElementById('fbi-ts');if(el2)el2.textContent=new Date().toISOString();
+  journalAppend('session.start',{sid});
+  // Set theme icons
+  const ic=_dark?'light_mode':'dark_mode';
+  ['theme-icon','theme-icon-landing'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=ic;});
+});
+
+/* ═══════════════════════════════════════════════════════
+   DV VICTIM MODE
+═══════════════════════════════════════════════════════ */
+function dvMode(){ document.getElementById('dv-modal').style.display='flex'; }
+function enableDVMode(){
+  S.dvMode=true;
+  document.getElementById('dv-modal').style.display='none';
+  document.body.classList.add('dv-mode');
+  guestLogin();
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(document.getElementById('dv-modal')?.style.display==='flex') document.getElementById('dv-modal').style.display='none';
+    if(document.getElementById('tos-modal')?.style.display==='flex') document.getElementById('tos-modal').style.display='none';
+  }
+});
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+const PAGE_TITLES={
+  home:'Dashboard', scan:'MDM Scanner', dns:'DNS Check', lookup:'Tenant Lookup',
+  forensic:'Deep Device Scan', dual:'Hidden vs Visible Check', bridge:'Device Bridge',
+  devices:'My Devices', audits:'Uploaded Files', probes:'Scan Scripts',
+  disclosure:'DSAR Letters', tracker:'Deadline Tracker', bundle:'Export Evidence',
+  orgmap:'Organization Map', firmware:'Firmware Tools', history:'Scan History',
+  journal:'Activity Log', tos:'Terms of Service',
+};
+
+function nav(page){
+  S.currentPage=page;
+  document.querySelectorAll('.nav-link').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.mn-item').forEach(e=>e.classList.remove('active'));
+  const nl=document.getElementById('nav-'+page);if(nl)nl.classList.add('active');
+  const ml=document.getElementById('mn-'+page);if(ml)ml.classList.add('active');
+  const title=PAGE_TITLES[page]||page;
+  document.getElementById('topbar-title').textContent=title;
+  const c=document.getElementById('content');
+  c.innerHTML='<div class="loading"><div class="spinner"></div>Loading…</div>';
+  setTimeout(()=>{
+    c.innerHTML='';
+    if(PAGES[page]){PAGES[page]();}
+    else{c.innerHTML=`<div class="card" style="text-align:center;padding:48px"><span class="mi mi-xl" style="display:block;margin-bottom:12px;color:var(--t3)">web_asset_off</span><div style="font-size:15px;font-weight:600;margin-bottom:8px">Page not found</div><div class="card-sub">The page "${esc(page)}" does not exist.</div><button class="btn-primary btn-sm" style="margin-top:16px" onclick="nav('home')"><span class="mi mi-sm">home</span>Go to Dashboard</button></div>`;}
+  },0);
+  window.scrollTo(0,0);
+}
+
+function toggleSidebar(){
+  const s=document.getElementById('sidebar');
+  const open=s.style.display!=='none'&&s.style.display!=='';
+  s.style.display=open?'none':'flex';
+  if(!open){s.style.flexDirection='column';}
+}
+function switchTab(btn,panelId){
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const scope=btn.closest('[data-tabs],.card,.screen')||document.getElementById('content');
+  scope.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById(panelId);if(panel)panel.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════
+   KNOWLEDGE BASE
+═══════════════════════════════════════════════════════ */
+const CAT_LABELS={
+  apple_dep:'Apple Business / School Manager (DEP / MDM)',
+  domain_intel:'Microsoft Entra / Intune / Autopilot',
+  samsung_knox:'Samsung Knox KME / Knox Guard / E-FOTA',
+  mdm_discovery:'MDM Platform (Jamf, Workspace ONE, Ivanti, Meraki, Kandji, Citrix, BlackBerry, MaaS360)',
+  google_android:'Android Enterprise / Zero-Touch / Workspace',
+  edr_discovery:'Security Monitoring (CrowdStrike, Sophos, Defender)',
+  identity_discovery:'Identity Management (Okta, JumpCloud, Duo, Auth0)',
+};
+const DEPTH_LABELS={
+  apple_dep:'FULL SUPERVISION — silent app control, remote wipe, GPS lock, global proxy',
+  domain_intel:'TENANT CONFIRMED — Conditional Access, device compliance, activity logging',
+  samsung_knox:'KNOX MANAGED — Knox Container, remote lock, E-FOTA firmware control, Knox Guard',
+  mdm_discovery:'MDM INFRASTRUCTURE EXPOSED — management server URL and org identity revealed',
+  google_android:'ANDROID ENTERPRISE — Device Owner or Work Profile management confirmed',
+  edr_discovery:'EDR AGENT CONFIRMED — continuous process/network/file monitoring',
+  identity_discovery:'IDENTITY MANAGED — org controls auth, MFA, Conditional Access, all SSO logs',
+};
+const PLATFORM_CAPS={
+  apple_dep:{supervised:['Silently install or remove ANY app without your knowledge','Lock device to org via Activation Lock','Put device in Lost Mode with GPS tracking','Remote wipe (immediate factory reset — no warning)','Route ALL web traffic through org proxy servers','Block websites at OS level regardless of browser','Install organization certificate authorities (enables traffic interception)','Force specific apps through org VPN','Prevent you from removing the MDM profile']},
+  domain_intel:{tenant:['Log all sign-in activity for devices on this domain','Enforce Conditional Access — decide what you can access','Require device compliance checks','Push Microsoft Intune MDM enrollment','Access Microsoft 365 email and files remotely']},
+  samsung_knox:{kme_enrolled:['Knox Container — separate encrypted work area','Remote lock and wipe','E-FOTA — push firmware updates','Block or allow apps at hardware level','Knox Guard — can permanently brick the device']},
+  google_android:{device_owner:['Full device control including factory reset','Silent app installation and removal','Lock down device settings','Enable always-on VPN','Control location services']},
+};
+
+/* ═══════════════════════════════════════════════════════
+   DNS PROBES (client-side via Cloudflare DoH)
+═══════════════════════════════════════════════════════ */
+const DNS_PROBES=[
+  {sub:'enterpriseregistration',vendor:'Microsoft Intune',sev:'CRITICAL',note:'Enterprise device registration — confirms Intune MDM configured for this domain'},
+  {sub:'enterpriseenrollment',vendor:'Microsoft MDM',sev:'CRITICAL',note:'MDM enrollment endpoint — Windows devices auto-enroll when joined to this domain'},
+  {sub:'mdm',vendor:'Generic MDM',sev:'HIGH',note:'MDM server — management infrastructure endpoint'},
+  {sub:'enroll',vendor:'Generic MDM Enrollment',sev:'HIGH',note:'Enrollment server — devices directed here for MDM setup'},
+  {sub:'jamf',vendor:'Jamf Pro',sev:'CRITICAL',note:'Jamf MDM server — Apple device management confirmed'},
+  {sub:'kme',vendor:'Samsung Knox KME',sev:'CRITICAL',note:'Samsung Knox Mobile Enrollment — Samsung device management'},
+  {sub:'mdmenrollment',vendor:'Apple MDM',sev:'CRITICAL',note:'Apple MDM enrollment — custom domain MDM server'},
+  {sub:'microsoftonline',vendor:'Microsoft 365',sev:'HIGH',note:'Microsoft 365 tenant — cloud identity and device management'},
+  {sub:'okta',vendor:'Okta Identity',sev:'HIGH',note:'Okta identity provider — org controls authentication via Okta'},
+  {sub:'duo',vendor:'Duo Security MFA',sev:'MEDIUM',note:'Duo Security — multi-factor authentication enforced by org'},
+  {sub:'jumpcloud',vendor:'JumpCloud',sev:'HIGH',note:'JumpCloud directory — device and identity management'},
+  {sub:'airwatch',vendor:'VMware AirWatch',sev:'CRITICAL',note:'VMware AirWatch / Workspace ONE MDM server'},
+  {sub:'awmdm',vendor:'VMware AirWatch',sev:'CRITICAL',note:'AirWatch MDM — organization device management confirmed'},
+  {sub:'mobileiron',vendor:'MobileIron / Ivanti',sev:'CRITICAL',note:'MobileIron / Ivanti MDM server — device management infrastructure'},
+  {sub:'auth',vendor:'Auth0 / Generic SSO',sev:'MEDIUM',note:'SSO/Auth provider — org controls authentication endpoint'},
+  {sub:'idp',vendor:'Identity Provider',sev:'MEDIUM',note:'Identity provider — SAML/OIDC SSO configured by org'},
+  {sub:'falcon',vendor:'CrowdStrike Falcon',sev:'CRITICAL',note:'CrowdStrike Falcon EDR — endpoint security monitoring'},
+  {sub:'crowdstrike',vendor:'CrowdStrike',sev:'CRITICAL',note:'CrowdStrike EDR — endpoint detection and response agent'},
+  {sub:'sophos',vendor:'Sophos Central',sev:'HIGH',note:'Sophos endpoint security — org-managed security monitoring'},
+  {sub:'citrix',vendor:'Citrix Endpoint',sev:'HIGH',note:'Citrix Endpoint Management — MDM/MAM server'},
+  {sub:'kandji',vendor:'Kandji MDM',sev:'CRITICAL',note:'Kandji MDM — Apple device management platform'},
+];
+
+/* ═══════════════════════════════════════════════════════
+   LEGAL TEMPLATES
+═══════════════════════════════════════════════════════ */
+const TEMPLATES={
+  gdpr_access:{label:'GDPR Art. 15 — Right of Access (general)',recipient_default:'privacy@',category:'dsar',statute:'gdpr',days:30,
+    body:v=>`SUBJECT: Data Subject Access Request — Article 15 GDPR\n\nTo: ${v.recipient}\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nPursuant to Article 15 of the UK/EU GDPR, I request a copy of all personal data you hold relating to the hardware identifiers and identity listed below.\n\nHardware identifiers:\n${v.deviceBlock}\n\nOrganization / tenant references:\n${v.tenantBlock}\n\nEvidence from my device:\n${v.auditBlock}\n\nAdditional context:\n${v.context}\n\nSigned,\n${v.name}`},
+  gdpr_erasure:{label:'GDPR Art. 17 — Right to Be Forgotten',recipient_default:'privacy@',category:'dsar',statute:'gdpr',days:30,
+    body:v=>`SUBJECT: Right to Erasure Request — Article 17 GDPR\n\nTo: ${v.recipient}\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nPursuant to Article 17 GDPR I request deletion of all personal data tied to the hardware identifiers and identity below.\n\nHardware identifiers:\n${v.deviceBlock}\n\nTenant / organization references:\n${v.tenantBlock}\n\nEvidence from my device:\n${v.auditBlock}\n\nContext:\n${v.context}\n\nSigned,\n${v.name}`},
+  employer_recovery:{label:'Demand letter — release device management',recipient_default:'(your employer)',category:'abuse',statute:'default',days:30,
+    body:v=>`SUBJECT: Personal Device Recovery — Demand to Release Management\n\nTo: ${v.recipient}\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nThe hardware identifiers below are my personal property. I demand you:\n(1) Remove them from any MDM, EDR, identity, or access management system;\n(2) Release any Activation Lock, Knox Guard, or Autopilot lock;\n(3) Confirm in writing the date and systems from which they were removed.\n\nHardware identifiers:\n${v.deviceBlock}\n\nTenant / organization references:\n${v.tenantBlock}\n\nEvidence:\n${v.auditBlock}\n\nContext:\n${v.context}\n\nSigned,\n${v.name}`},
+  apple_activation_lock:{label:'Apple — Activation Lock removal request',recipient_default:'(https://support.apple.com/activationlock)',category:'abuse',statute:'default',days:30,
+    body:v=>`SUBJECT: Activation Lock Removal — Proof of Ownership\n\nTo: Apple Customer Support\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nI am the lawful owner of the Apple hardware below and request removal of Activation Lock or MDM enrollment.\n\nHardware identifiers:\n${v.deviceBlock}\n\nOrganization holding device under lock:\n${v.tenantBlock}\n\nEvidence:\n${v.auditBlock}\n\nOwnership context:\n${v.context}\n\nSigned,\n${v.name}`},
+  gdpr_apple:{label:'GDPR Art. 15 DSAR — Apple',recipient_default:'privacy@apple.com',category:'dsar',statute:'gdpr',days:30,
+    body:v=>`SUBJECT: Data Subject Access Request — Article 15 GDPR\n\nTo: Apple Privacy <${v.recipient}>\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nPursuant to Article 15 GDPR I request all personal data Apple holds associated with the hardware identifiers below, including Apple Business Manager, Apple School Manager, iCloud device records, and Apple ID activity logs.\n\nHardware identifiers:\n${v.deviceBlock}\n\nTenant / organization references:\n${v.tenantBlock}\n\nEvidence:\n${v.auditBlock}\n\nContext:\n${v.context}\n\nSigned,\n${v.name}`},
+  gdpr_google:{label:'GDPR Art. 15 DSAR — Google',recipient_default:'data-protection-office@google.com',category:'dsar',statute:'gdpr',days:30,
+    body:v=>`SUBJECT: Data Subject Access Request — Article 15 GDPR\n\nTo: Google Data Protection Office <${v.recipient}>\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nPursuant to Article 15 GDPR I request all personal data Google holds linked to the hardware identifiers below, including Android Enterprise enrollment records, Android Zero-Touch enrollment, and Workspace device history.\n\nHardware identifiers:\n${v.deviceBlock}\n\nTenant / organization references:\n${v.tenantBlock}\n\nEvidence:\n${v.auditBlock}\n\nContext:\n${v.context}\n\nSigned,\n${v.name}`},
+  ccpa_generic:{label:'CCPA §1798.110 Request',recipient_default:'privacy@',category:'dsar',statute:'ccpa',days:45,
+    body:v=>`SUBJECT: CCPA Right-to-Know Request — Cal. Civ. Code §1798.110\n\nTo: ${v.recipient}\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nPursuant to California Civil Code §1798.110 I request disclosure of all categories of personal information collected about me, specifically covering the hardware identifiers below.\n\nHardware identifiers:\n${v.deviceBlock}\n\nEvidence:\n${v.auditBlock}\n\nContext:\n${v.context}\n\nPlease respond within 45 days per §1798.130.\n\nSigned,\n${v.name}`},
+  abuse_msrc:{label:'Report abuse — Microsoft Security Response Center',recipient_default:'secure@microsoft.com',category:'abuse',statute:'default',days:30,
+    body:v=>`SUBJECT: Unauthorized Microsoft Autopilot / Intune Enrollment Report\n\nTo: Microsoft Security Response Center <${v.recipient}>\nFrom: ${v.name} <${v.email}>\nDate: ${v.date}\n\nI am reporting unauthorized enrollment of hardware I lawfully own into a Microsoft tenant.\n\nTenant:\n${v.tenantBlock}\n\nHardware identifiers:\n${v.deviceBlock}\n\nEvidence:\n${v.auditBlock}\n\nContext:\n${v.context}\n\nSigned,\n${v.name}`},
+  ic3_record:{label:'FBI IC3 supporting record (file at ic3.gov)',recipient_default:'(submit at https://www.ic3.gov)',category:'abuse',statute:'default',days:30,
+    body:v=>`SUBJECT: Supporting Record for FBI IC3 Complaint — Device Fraud\n\nComplainant: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nTenant / organization implicated:\n${v.tenantBlock}\n\nAffected hardware identifiers:\n${v.deviceBlock}\n\nEvidence from my device:\n${v.auditBlock}\n\nNarrative:\n${v.context}\n\nSigned,\n${v.name}`},
+  state_ag:{label:'State Attorney General consumer complaint',recipient_default:'(your state AG)',category:'abuse',statute:'default',days:30,
+    body:v=>`SUBJECT: Consumer Complaint — Unauthorized Device Management\n\nTo: ${v.recipient}\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nTenant / organization implicated:\n${v.tenantBlock}\n\nAffected hardware:\n${v.deviceBlock}\n\nEvidence:\n${v.auditBlock}\n\nNarrative:\n${v.context}\n\nSigned,\n${v.name}`},
+  regulator_ico:{label:'Regulator complaint — no response to DSAR (UK ICO / EU DPA)',recipient_default:'casework@ico.org.uk',category:'abuse',statute:'gdpr',days:30,
+    body:v=>`SUBJECT: Article 77 GDPR Complaint — Controller Failed to Respond\n\nTo: ${v.recipient}\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nTenant / organization implicated:\n${v.tenantBlock}\n\nHardware identifiers my original request concerned:\n${v.deviceBlock}\n\nEvidence:\n${v.auditBlock}\n\nDetails of the original request and failure to respond:\n${v.context}\n\nSigned,\n${v.name}`},
+  carrier_dsar:{label:'Carrier device-history data request',recipient_default:'(your carrier privacy office)',category:'dsar',statute:'gdpr',days:30,
+    body:v=>`SUBJECT: Subscriber Device History Data Request\n\nTo: ${v.recipient}\nFrom: ${v.name} <${v.email}>\nAddress: ${v.address}\nDate: ${v.date}\n\nI request all records tying the hardware identifiers below to my subscriber account, including activation dates, transfers, and enterprise mobility records.\n\nHardware identifiers:\n${v.deviceBlock}\n\nTenant / organization references:\n${v.tenantBlock}\n\nEvidence:\n${v.auditBlock}\n\nContext:\n${v.context}\n\nSigned,\n${v.name}`},
+};
+
+/* ═══════════════════════════════════════════════════════
+   SCAN SCRIPTS
+═══════════════════════════════════════════════════════ */
+const PROBE_SCRIPTS={
+  android:{filename:'mdmcheck-probe-android.sh',mime:'text/x-shellscript',
+    content:`#!/bin/bash\n# MDMCheck v14 — Android Forensic Probe\n# Run via ADB: adb shell < mdmcheck-probe-android.sh > probe-output.txt\nset +e\necho "=== MDMCheck Android Probe v14 ==="\necho "Time: $(date -u +%FT%TZ)"\necho ""\necho "=== [F0] DEVICE IDENTITY ==="\ngetprop | grep -iE "ro.serialno|ro.boot.serialno|ro.product.model|ro.product.manufacturer|ro.build.version.release|ro.build.id|ro.product.device"\necho "=== [F1] REGIONAL / CSC AUDIT ==="\ngetprop | grep -iE "ro.boot.hwc|ro.boot.csc|ro.boot.carrier|persist.sys.country|ro.product.locale|gsm.operator.iso-country|ro.csc.sales_code"\necho "=== [F2] DEVICE ADMIN PACKAGES ==="\ncat /data/system/device_owners.xml 2>/dev/null || echo "(no access)"\ncat /data/system/device_policies.xml 2>/dev/null | head -30 || echo "(no access)"\npm list packages -d -e 2>/dev/null | head -50\necho "=== [F3] ENROLLMENT DATABASE ==="\nfor db in $(find /data/data -name "*.db" 2>/dev/null | head -20); do\n  strings "$db" 2>/dev/null | grep -iE "enrollmentToken|enterpriseId|checkin_url|mdm_url|zerotouchurl|dpcExtras|afwManagementUrl" | head -5 && echo "[from $db]"\ndone\necho "=== [F4] ADB KEYS + CA CERTIFICATES ==="\ncat /data/misc/adb/adb_keys 2>/dev/null || echo "(no access)"\nls /data/misc/user/0/cacerts-added/ 2>/dev/null && cat /data/misc/user/0/cacerts-added/* 2>/dev/null | openssl x509 -noout -subject -issuer 2>/dev/null\necho "=== [F5] ZERO-TOUCH / PROVISIONING ==="\ncat /data/data/com.google.android.setupwizard/shared_prefs/zero_touch_preferences.xml 2>/dev/null\ngetprop | grep -iE "wpad|proxy|dhcp|provision"\necho "=== [F6] HIDDEN PACKAGES (privileged) ==="\npm list packages -a -u 2>/dev/null | grep -iE "mdm|manage|intune|knox|enterprise|enroll|jamf|airwatch|mobileiron|crowdstrike|sophos|okta|jumpcloud|duo" | head -30\necho "=== END PROBE ==="`,
+  },
+  windows:{filename:'mdmcheck-probe.ps1',mime:'text/x-powershell',
+    content:`# MDMCheck v14 — Windows Forensic Probe\n# Run from Administrator PowerShell\n$ErrorActionPreference = "Continue"\n$out = "mdmcheck-probe-output.txt"\n@("MDMCheck Windows Forensic Probe v14","Generated: $(Get-Date -Format o)","Hostname: $env:COMPUTERNAME","User: $env:USERNAME","") | Out-File -Encoding utf8 $out\nfunction Section($name, $script) {\n  "","=== $name ===" | Out-File -Encoding utf8 -Append $out\n  try { & $script 2>&1 | Out-File -Encoding utf8 -Append $out } catch { "ERROR: $_" | Out-File -Encoding utf8 -Append $out }\n}\nSection "MDM enrollment status" { dsregcmd /status }\nSection "Enrollment registry" {\n  Get-ChildItem 'HKLM:\\SOFTWARE\\Microsoft\\Enrollments' -EA SilentlyContinue | ForEach-Object {\n    "ENROLLMENT: $($_.PSChildName)"; Get-ItemProperty $_.PSPath -EA SilentlyContinue | Format-List *\n  }\n}\nSection "OMA-DM Accounts" {\n  Get-ChildItem 'HKLM:\\SOFTWARE\\Microsoft\\Provisioning\\OMADM\\Accounts' -EA SilentlyContinue | ForEach-Object { "ACCOUNT: $($_.PSChildName)" }\n}\nSection "MDM certificates" {\n  Get-ChildItem Cert:\\LocalMachine\\My -EA SilentlyContinue | Where-Object { $_.Subject -match 'Intune|MDM|Enrollment|CrowdStrike|Sophos' } | Format-List Subject,Issuer,NotBefore,NotAfter\n}\nSection "CrowdStrike Falcon" { Get-Service CsFalconService -EA SilentlyContinue | Format-List * }\nSection "Windows Defender enrollment" { Get-MpComputerStatus -EA SilentlyContinue | Select DefenderEnabled,AMServiceEnabled,TamperProtectionSource }\nSection "All management certificates" {\n  Get-ChildItem Cert:\\LocalMachine\\My -EA SilentlyContinue | Format-List Subject,Issuer,Thumbprint\n}\nWrite-Host "Done. Upload $out to Uploaded Files in MDMCheck."`,
+  },
+  macos:{filename:'mdmcheck-probe.sh',mime:'text/x-shellscript',
+    content:`#!/bin/bash\n# MDMCheck v14 — macOS Forensic Probe\nset +e\nOUT="mdmcheck-probe-output.txt"\n{\n  echo "MDMCheck macOS Forensic Probe v14"\n  echo "Generated: $(date -u +%FT%TZ)"\n  echo "Hostname: $(hostname)"\n  echo ""\n  sw_vers\n  echo ""\n  echo "=== Management profiles ==="\n  sudo profiles show -all 2>/dev/null\n  echo ""\n  echo "=== Profile list ==="\n  sudo profiles list 2>/dev/null\n  echo ""\n  echo "=== Managed preferences ==="\n  sudo ls -la "/Library/Managed Preferences" 2>/dev/null\n  echo ""\n  echo "=== Jamf ==="\n  ls -la /usr/local/jamf/bin/ 2>/dev/null\n  sudo jamf version 2>/dev/null\n  echo ""\n  echo "=== Microsoft Intune ==="\n  ls -la "/Library/Application Support/Microsoft/Intune" 2>/dev/null\n  echo ""\n  echo "=== CrowdStrike Falcon ==="\n  ls -la /opt/CrowdStrike/ 2>/dev/null\n  sudo /opt/CrowdStrike/falconctl stats 2>/dev/null\n  echo ""\n  echo "=== JumpCloud ==="\n  ls -la /opt/jc/ 2>/dev/null\n  /opt/jc/bin/jcagent --status 2>/dev/null\n  echo ""\n  echo "=== System extensions ==="\n  systemextensionsctl list 2>/dev/null\n  echo ""\n  echo "=== Trust store additions ==="\n  security find-certificate -a /Library/Keychains/System.keychain 2>/dev/null | grep -iE "alis|subj|labl" | grep -v Apple | head -30\n} > "$OUT"\necho "Saved to $OUT. Upload to Uploaded Files in MDMCheck."`,
+  },
+  ios:{filename:'mdmcheck-probe-ios.txt',mime:'text/plain',
+    content:`MDMCheck v14 — iPhone / iPad Manual Check Guide\n\niOS restricts automated access. Complete these manual steps and save screenshots.\n\nSTEP 1 — Management profiles\n  Settings → General → VPN & Device Management\n  Screenshot each profile. Note: Name, Organization, Identifier.\n  If supervised: Settings → General → About → "This iPhone is supervised and managed by [Org]"\n\nSTEP 2 — Device identifiers\n  Settings → General → About\n  Record: Serial Number, IMEI, Model Number, iOS Version.\n\nSTEP 3 — Network proxy check\n  Settings → Wi-Fi → tap your network → HTTP Proxy\n  If "Automatic" with a URL → your org intercepts traffic.\n\nSTEP 4 — Certificate trust store\n  Settings → General → About → Certificate Trust Settings\n  Any org certificate enabled = org can decrypt your HTTPS traffic.\n\nSTEP 5 — Supervision status\n  Connect to Mac/PC, open Finder (macOS) or iTunes (Windows)\n  Device info pane: "Supervised" flag shown if true.\n\nSTEP 6 — Screen Time / Restrictions\n  Settings → Screen Time\n  If managed: "This Screen Time is managed by your family or organization"\n\nRecord all findings and add them to Uploaded Files in MDMCheck.`,
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════════════════ */
+const PAGES={};
+
+/* ── DASHBOARD ── */
+PAGES.home=function(){
+  const c=document.getElementById('content');
+  const crit=S.findings.filter(f=>f.severity==='CRITICAL').length;
+  const high=S.findings.filter(f=>f.severity==='HIGH').length;
+  const overdue=S.dispatches.filter(d=>d.status==='pending'&&new Date(d.deadline_at)<new Date()).length;
+  const dvBanner=S.dvMode?`<div class="dv-help-banner"><b>Confidential Mode Active.</b> All session data is local only. National DV Hotline: 1-800-799-SAFE (7233). <a href="https://www.thehotline.org/plan-for-safety/tech-safety/" target="_blank" rel="noopener" style="color:#D89AFF">Tech safety guide ↗</a></div>`:'';
+  c.innerHTML=`
+  ${dvBanner}
+  <div class="card-row">
+    <div class="stat-card"><div class="stat-val">${S.devices.length}</div><div class="stat-lbl">My Devices</div></div>
+    <div class="stat-card"><div class="stat-val">${S.audits.length}</div><div class="stat-lbl">Files Uploaded</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${crit>0?'var(--err)':'var(--ok)'}">${crit}</div><div class="stat-lbl">Critical Issues</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${overdue>0?'var(--warn)':'var(--ok)'}">${overdue}</div><div class="stat-lbl">Overdue Requests</div></div>
+  </div>
+  <div class="card" style="border-color:var(--p-bd)">
+    <div class="card-title"><span class="mi" style="color:var(--p)">help_outline</span>How to use MDMCheck — 6 steps</div>
+    <div style="font-size:12px;color:var(--t2);line-height:2.2;margin-top:10px">
+      <div><b style="color:var(--t)">Step 1</b> — Add your device under <b>My Devices</b> (serial number, purchase info).</div>
+      <div><b style="color:var(--t)">Step 2</b> — Download a <b>Scan Script</b>, run it on your device, upload output to <b>Uploaded Files</b>.</div>
+      <div><b style="color:var(--t)">Step 3</b> — Run <b>MDM Scanner</b> on your work email domain — 40+ concurrent server-side probes.</div>
+      <div><b style="color:var(--t)">Step 4</b> — Use <b>Deep Device Scan</b> (paste ADB/PowerShell output) or <b>Hidden vs Visible</b> for dual-state comparison.</div>
+      <div><b style="color:var(--t)">Step 5</b> — Generate a <b>DSAR Letter</b> (GDPR/CCPA) and track the response deadline.</div>
+      <div><b style="color:var(--t)">Step 6</b> — Export a SHA-256 chained <b>Evidence File</b> ready for attorneys or court.</div>
+    </div>
+  </div>
+  <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:12px">All Tools</div>
+  <div class="grid3">
+    ${[
+      ['scan','radar','MDM Scanner','40+ server-side probes across Apple, Intune, Knox, and 18 more platforms.','Tier 0'],
+      ['dns','dns','DNS Check','Looks up management DNS records — every MDM must publish these publicly.','DNS'],
+      ['forensic','biotech','Deep Device Scan','Paste ADB/PS output to detect hidden device owners, foreign certs, enrollment tokens.','Forensic'],
+      ['dual','compare_arrows','Hidden vs Visible','Compares standard vs privileged view of your device. Differences are red flags.','Phase A/B'],
+      ['orgmap','account_tree','Org Map','Force-directed D3 visualization of all management entities found in your session.','Visual'],
+      ['devices','devices','My Devices','Record serial numbers, purchase proof, and ownership confidence score.','Step 1'],
+      ['audits','folder_open','Uploaded Files','Upload .mobileconfig, .plist, .reg, Autopilot CSV, certificates, XML, JSON.','Step 2'],
+      ['disclosure','mail','DSAR Letters','12 pre-filled legal letters — GDPR, CCPA, Apple, Google, Microsoft, FBI IC3, State AG.','Legal'],
+      ['tracker','schedule','Deadline Tracker','Track GDPR (30-day), CCPA (45-day), and custom legal deadlines.','Deadlines'],
+      ['bundle','inventory_2','Export Evidence','SHA-256 chained evidence log exportable as HTML, JSON, or PDF.','Export'],
+    ].map(([pg,ic,ti,de,ba])=>`
+      <div class="module-card" onclick="nav('${pg}')">
+        <div class="mc-icon"><span class="mi">${ic}</span></div>
+        <div class="mc-title">${ti}</div>
+        <div class="mc-desc">${de}</div>
+        <span class="sev-badge sev-INFO" style="align-self:flex-start">${ba}</span>
+      </div>`).join('')}
+  </div>
+  ${crit>0?`<div class="alert alert-critical" style="margin-top:16px">${sevIcon('CRITICAL')}<div><b>${crit} critical issue${crit>1?'s':''}</b> found. Review under Deep Device Scan or Uploaded Files.</div></div>`:''}
+  ${overdue>0?`<div class="alert alert-warn"><span class="mi" style="color:var(--warn);flex-shrink:0">schedule</span><div><b>${overdue} deadline${overdue>1?'s':''} overdue.</b> Check Deadline Tracker.</div></div>`:''}`;
+};
+
+/* ── MDM SCANNER ── */
+PAGES.scan=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-title"><span class="mi" style="color:var(--p)">radar</span>MDM Scanner</div>
+    <div class="card-sub">Enter your work email or domain to check 40+ management server addresses. Probes run via the MDMCheck server — not your browser — for maximum coverage without CORS restrictions.</div>
+    <div class="form-row" style="margin-top:14px">
+      <label>Email address or domain (e.g. user@company.com or company.com)</label>
+      <div class="flex-row">
+        <input id="scan-target" placeholder="user@company.com" style="flex:1" onkeydown="if(event.key==='Enter')startScan()">
+        <button class="btn-primary" onclick="startScan()" id="scan-btn"><span class="mi mi-sm">radar</span>Start Scan</button>
+      </div>
+    </div>
+    <div id="scan-progress" style="display:none;margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span id="scan-label" style="font-size:12px;color:var(--t2)">Scanning…</span>
+        <span id="scan-counter" class="scan-counter-badge">0 / 40</span>
+      </div>
+      <div class="probe-bar-bg"><div id="scan-bar" class="probe-bar"></div></div>
+    </div>
+  </div>
+  <div id="scan-log" class="probe-log" style="padding:0 4px"></div>
+  <div id="scan-results"></div>`;
+};
+
+async function startScan(){
+  const target=document.getElementById('scan-target')?.value.trim();
+  if(!target){alert('Please enter an email or domain.');return;}
+  if(S.scanState.running){alert('Scan already in progress.');return;}
+  S.scanState={running:true,log:[],findings:[],summary:{}};
+  const btn=document.getElementById('scan-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<div class="spinner" style="width:14px;height:14px;margin:0"></div> Scanning…';}
+  document.getElementById('scan-progress').style.display='block';
+  document.getElementById('scan-results').innerHTML='<div class="loading"><div class="spinner"></div>Connecting to scan server…</div>';
+  document.getElementById('scan-log').innerHTML='';
+  setStatus('Scanning '+target,'var(--p)');
+
+  const addLog=(msg,cls='')=>{
+    const el=document.getElementById('scan-log');if(!el)return;
+    const d=document.createElement('div');d.textContent=msg;
+    if(cls==='hit')d.className='hit';else if(cls==='err')d.className='err';else d.className='probe';
+    el.appendChild(d);el.scrollTop=el.scrollHeight;
+  };
+
+  try{
+    const res=await fetch(`${API_BASE}/scan`,{
+      method:'POST',
+      headers:{...apiHeaders(),'Content-Type':'application/json'},
+      body:JSON.stringify({target,fp_id:S.fpId}),
+    });
+
+    if(res.status===429){
+      const j=await res.json();
+      document.getElementById('scan-results').innerHTML=`<div class="alert alert-warn"><span class="mi" style="color:var(--warn)">schedule</span><div>${esc(j.error)}</div></div>`;
+      return;
+    }
+    if(!res.ok||!res.body){throw new Error(`Server returned ${res.status}`);}
+
+    const findings=[];let total=40,done=0,hits=0;
+    const reader=res.body.getReader();const dec=new TextDecoder();let buf='';
+
+    while(true){
+      const {value,done:d}=await reader.read();if(d)break;
+      buf+=dec.decode(value,{stream:true});
+      const parts=buf.split('\n\n');buf=parts.pop();
+      for(const part of parts){
+        if(!part.trim())continue;
+        const lines=part.split('\n');
+        let evt='message',data='';
+        for(const ln of lines){
+          if(ln.startsWith('event:'))evt=ln.slice(6).trim();
+          else if(ln.startsWith('data:'))data=ln.slice(5).trim();
+        }
+        try{const payload=JSON.parse(data);
+          if(evt==='start'){total=payload.total||40;addLog(`→ Scanning ${payload.domain} — ${total} probes`);}
+          else if(evt==='probe'){
+            done++;
+            const pct=Math.round((done/total)*100);
+            const bar=document.getElementById('scan-bar');if(bar)bar.style.width=pct+'%';
+            const ctr=document.getElementById('scan-counter');if(ctr)ctr.textContent=`${done} / ${total}`;
+            if(payload.hit)addLog(`✓ ${payload.label}`,'hit');
+          }
+          else if(evt==='finding'){hits++;findings.push(payload);S.scanState.findings.push(payload);}
+          else if(evt==='complete'){
+            S.scanHistory.push({id:uid(),ts:now(),target,finding_count:payload.hits,findings:findings.map(f=>({key:f.key,label:f.label,cat:f.category,conf:f.confidence}))});
+            const bar=document.getElementById('scan-bar');if(bar)bar.style.width='100%';
+            const lbl=document.getElementById('scan-label');if(lbl)lbl.textContent=`Complete — ${payload.hits} finding${payload.hits!==1?'s':''} in ${total} probes.`;
+            journalAppend('scan.completed',{target,hits:payload.hits});
+            renderScanResults(findings,target,payload.scanId);save();
+          }
+          else if(evt==='error'){addLog(`Error: ${payload.message}`,'err');}
+        }catch{}
+      }
+    }
+  }catch(e){
+    addLog('Connection failed: '+e.message,'err');
+    const isNoBackend=e.message.includes('404')||e.message.includes('fetch')||e.message.includes('NetworkError')||e.message.includes('Failed');
+    document.getElementById('scan-results').innerHTML=`<div class="alert alert-err"><span class="mi" style="color:var(--err)">error</span><div>${isNoBackend?'<b>MDM Scanner requires the backend API</b> — not available on this static deployment.<br><small style="color:var(--t3)">Client-side tools that work without API: DNS Check · Deep Device Scan · DSAR Letters · Evidence Export · Tenant Lookup. Deploy the MDMCheck server to enable the 40-probe network scanner.</small>':'Scan failed: '+esc(e.message)+'<br><small style="color:var(--t3)">Make sure you are connected to the MDMCheck API server.</small>'}</div></div>`;
+  }finally{
+    S.scanState.running=false;
+    const b=document.getElementById('scan-btn');if(b){b.disabled=false;b.innerHTML='<span class="mi mi-sm">radar</span>Start Scan';}
+    setStatus('Ready');
+  }
+}
+
+function renderScanResults(findings,target,scanId){
+  const el=document.getElementById('scan-results');
+  if(!findings||!findings.length){
+    el.innerHTML=`<div class="alert alert-ok"><span class="mi" style="color:var(--ok);flex-shrink:0">check_circle</span><div><b>No management infrastructure found</b> for <b>${esc(target)}</b>.<br><span style="color:var(--t2)">Your domain appears clean across all 40 probes. Zero false positives — each probe requires a positive body match.</span></div></div>`;
+    return;
+  }
+  const cats=[...new Set(findings.map(f=>f.category))];
+  el.innerHTML=`
+  <div class="alert alert-warn"><span class="mi" style="color:var(--warn);flex-shrink:0">warning</span><div><b>${findings.length} management endpoint${findings.length!==1?'s':''} found</b> for <b>${esc(target)}</b>. Expand each finding for details and capabilities.</div></div>
+  ${scanId?`<div style="font-size:10px;color:var(--t3);font-family:var(--mono);margin-bottom:12px">Scan ID: ${esc(scanId)}</div>`:''}
+  ${cats.map(cat=>{
+    const catF=findings.filter(f=>f.category===cat);
+    const caps=(PLATFORM_CAPS[cat]?Object.values(PLATFORM_CAPS[cat])[0]:null)||[];
+    return `<div class="card">
+      <div class="card-title" style="margin-bottom:4px">${esc(CAT_LABELS[cat]||cat)}</div>
+      <div class="card-sub" style="margin-bottom:14px;color:var(--err)">${esc(DEPTH_LABELS[cat]||'')}</div>
+      ${catF.map(f=>`
+        <div class="finding-card sev-HIGH" onclick="this.querySelector('.finding-body').classList.toggle('open')">
+          <div class="finding-hdr"><span class="sev-badge sev-HIGH">HIGH</span><span class="finding-title">${esc(f.label)}</span><code style="font-size:10px;color:var(--t3)">${f.status||'—'}</code><span style="font-size:10px;color:var(--p);font-family:var(--mono)">${f.confidence||0}%</span></div>
+          <div class="finding-body">
+            <div><b>Endpoint:</b> <a href="${esc(f.url)}" target="_blank" rel="noopener" style="color:var(--p);word-break:break-all">${esc(f.url)}</a></div>
+            <div style="margin-top:6px"><b>Management depth:</b> ${esc(f.management_depth||'')}</div>
+            ${f.intel&&Object.keys(f.intel).length?`<div style="margin-top:8px"><b>Intel extracted:</b><br>${Object.entries(f.intel).map(([k,v])=>`<div class="finding-evidence">${esc(k)}: ${esc(v)}</div>`).join('')}</div>`:''}
+          </div>
+        </div>`).join('')}
+      ${caps.length?`<details style="margin-top:12px"><summary style="font-size:12px;color:var(--t2);cursor:pointer">What this org can do — ${caps.length} capabilities</summary><ul style="margin-top:8px;padding-left:18px">${caps.map(cap=>`<li style="font-size:12px;color:var(--err);margin-bottom:5px">${esc(cap)}</li>`).join('')}</ul></details>`:''}
+    </div>`;
+  }).join('')}
+  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+    <button class="btn-secondary btn-sm" onclick="nav('disclosure')"><span class="mi mi-sm">mail</span>Generate DSAR Letter</button>
+    <button class="btn-secondary btn-sm" onclick="nav('bundle')"><span class="mi mi-sm">inventory_2</span>Export Evidence</button>
+    <button class="btn-secondary btn-sm" onclick="nav('orgmap')"><span class="mi mi-sm">account_tree</span>View Org Map</button>
+  </div>`;
+}
+
+/* ── DNS CHECK ── */
+PAGES.dns=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-title"><span class="mi" style="color:var(--p)">dns</span>DNS Check</div>
+    <div class="card-sub">Checks your domain's public DNS records for management enrollment addresses via Cloudflare DoH (1.1.1.1). Every MDM must publish these — their presence confirms management is configured.</div>
+    <div class="form-row" style="margin-top:14px">
+      <label>Domain (e.g. company.com)</label>
+      <div class="flex-row">
+        <input id="dns-domain" placeholder="company.com" style="flex:1" onkeydown="if(event.key==='Enter')runDNS()">
+        <button class="btn-primary" onclick="runDNS()"><span class="mi mi-sm">dns</span>Check DNS</button>
+      </div>
+    </div>
+  </div>
+  <div id="dns-results"></div>`;
+};
+
+async function runDNS(){
+  const domain=document.getElementById('dns-domain').value.trim();
+  if(!domain){alert('Please enter a domain.');return;}
+  const el=document.getElementById('dns-results');
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Checking DNS records via Cloudflare DoH…</div>';
+  const results=[];
+  for(const probe of DNS_PROBES){
+    const fqdn=`${probe.sub}.${domain}`;
+    try{
+      for(const type of['CNAME','A','TXT']){
+        const r=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(fqdn)}&type=${type}`,{headers:{Accept:'application/dns-json'}});
+        const j=await r.json();
+        if(j.Answer?.length){results.push({...probe,fqdn,records:j.Answer.map(a=>a.data||''),dnsType:type});break;}
+      }
+    }catch{}
+  }
+  journalAppend('dns.scan',{domain,findings:results.length});
+  if(!results.length){
+    el.innerHTML=`<div class="alert alert-ok"><span class="mi" style="color:var(--ok);flex-shrink:0">check_circle</span><div>No management DNS records found for <b>${esc(domain)}</b>.</div></div>`;
+    return;
+  }
+  el.innerHTML=`
+  <div class="alert alert-err"><span class="mi" style="color:var(--err);flex-shrink:0">error</span><div><b>${results.length} management DNS record${results.length!==1?'s':''} found</b> for <b>${esc(domain)}</b>.</div></div>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Sev</th><th>Subdomain</th><th>Vendor</th><th>Type</th><th>Record</th><th>What it means</th></tr></thead>
+    <tbody>${results.map(r=>`<tr>
+      <td>${sev(r.sev)}</td>
+      <td class="mono" style="font-size:10px">${esc(r.fqdn)}</td>
+      <td style="font-weight:500;font-size:12px">${esc(r.vendor)}</td>
+      <td class="mono" style="font-size:10px">${esc(r.dnsType)}</td>
+      <td class="mono" style="font-size:10px">${r.records.map(v=>`<div>${esc(v)}</div>`).join('')}</td>
+      <td style="font-size:11px;color:var(--t2)">${esc(r.note)}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+/* ── TENANT LOOKUP ── */
+PAGES.lookup=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">manage_search</span>Tenant Lookup</div>
+    <div class="card-sub">Queries public identity infrastructure to look up who manages a domain or email address. Each lookup contacts third-party servers. Check the box confirming the identifier appears in your uploaded evidence.</div>
+  </div>
+  <div class="tabs" data-tabs>
+    <button class="tab active" onclick="switchTab(this,'lt-entra')">Microsoft / Entra</button>
+    <button class="tab" onclick="switchTab(this,'lt-upn')">User Email</button>
+    <button class="tab" onclick="switchTab(this,'lt-google')">Google Workspace</button>
+    <button class="tab" onclick="switchTab(this,'lt-okta')">Okta</button>
+    <button class="tab" onclick="switchTab(this,'lt-oidc')">Other OIDC</button>
+  </div>
+  <div id="lt-entra" class="tab-panel active"><div class="card">
+    <div class="form-row"><label>Domain (e.g. company.com)</label><input id="lt-entra-domain" placeholder="company.com"></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="lt-entra-ack" style="width:auto">I confirm this domain appears in my uploaded files or device output</label></div>
+    <button class="btn-primary" onclick="doEntraLookup()"><span class="mi mi-sm">search</span>Look Up Microsoft Tenant</button>
+    <div id="lt-entra-out" style="margin-top:12px"></div>
+  </div></div>
+  <div id="lt-upn" class="tab-panel"><div class="card">
+    <div class="form-row"><label>Work email address</label><input id="lt-upn-val" placeholder="user@company.com"></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="lt-upn-ack" style="width:auto">I confirm this email is in my uploaded files</label></div>
+    <button class="btn-primary" onclick="doUserRealm()"><span class="mi mi-sm">search</span>Check User Realm</button>
+    <div id="lt-upn-out" style="margin-top:12px"></div>
+  </div></div>
+  <div id="lt-google" class="tab-panel"><div class="card">
+    <div class="form-row"><label>Domain</label><input id="lt-gdomain" placeholder="company.com"></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="lt-g-ack" style="width:auto">I confirm this domain is in my uploaded files</label></div>
+    <button class="btn-primary" onclick="doGoogleWS()"><span class="mi mi-sm">search</span>Check Google Workspace</button>
+    <div id="lt-g-out" style="margin-top:12px"></div>
+  </div></div>
+  <div id="lt-okta" class="tab-panel"><div class="card">
+    <div class="form-row"><label>Okta subdomain (e.g. acme for acme.okta.com)</label><input id="lt-okta-sub" placeholder="acme"></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="lt-okta-ack" style="width:auto">I confirm this subdomain is in my uploaded files</label></div>
+    <button class="btn-primary" onclick="doOkta()"><span class="mi mi-sm">search</span>Look Up Okta Org</button>
+    <div id="lt-okta-out" style="margin-top:12px"></div>
+  </div></div>
+  <div id="lt-oidc" class="tab-panel"><div class="card">
+    <div class="form-row"><label>Identity provider URL (https://…)</label><input id="lt-oidc-url" placeholder="https://login.example.com"></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="lt-oidc-ack" style="width:auto">I confirm this URL is in my uploaded files</label></div>
+    <button class="btn-primary" onclick="doOIDC()"><span class="mi mi-sm">search</span>Fetch Configuration</button>
+    <div id="lt-oidc-out" style="margin-top:12px"></div>
+  </div></div>`;
+};
+
+async function doEntraLookup(){
+  if(!document.getElementById('lt-entra-ack').checked){alert('Please confirm this domain is in your uploaded files.');return;}
+  const domain=document.getElementById('lt-entra-domain').value.trim();if(!domain)return;
+  if(rl('entra:'+domain,3600000)){alert('Rate limit: 1 lookup per domain per hour.');return;}
+  const el=document.getElementById('lt-entra-out');el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const r=await fetch(`https://enterpriseregistration.windows.net/${domain}/discover?api-version=1.7`,{headers:{Accept:'application/json'}});
+    const j=await r.json().catch(()=>({}));
+    journalAppend('lookup.entra',{domain});
+    el.innerHTML=`<div class="card" style="margin:0"><div class="card-title">Microsoft Tenant — ${esc(domain)}</div><pre class="mono" style="font-size:11px;color:var(--t2);white-space:pre-wrap;margin-top:8px;overflow-x:auto">${esc(JSON.stringify(j,null,2))}</pre></div>`;
+  }catch(e){el.innerHTML=`<div class="alert alert-info"><span class="mi" style="color:var(--info)">info</span><div>Could not reach Microsoft tenant discovery. Domain may not be Entra-registered.</div></div>`;}
+}
+async function doUserRealm(){
+  if(!document.getElementById('lt-upn-ack').checked){alert('Please confirm this email is in your uploaded files.');return;}
+  const upn=document.getElementById('lt-upn-val').value.trim();if(!upn)return;
+  if(rl('userrealm:'+upn,3600000)){alert('Rate limit: 1 lookup per email per hour.');return;}
+  const el=document.getElementById('lt-upn-out');el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const r=await fetch(`https://login.microsoftonline.com/common/userrealm/${encodeURIComponent(upn)}?api-version=1.0`,{headers:{Accept:'application/json'}});
+    const j=await r.json();journalAppend('lookup.userrealm',{upn});
+    el.innerHTML=`<div class="card" style="margin:0"><div class="card-title">User Realm — ${esc(upn)}</div><pre class="mono" style="font-size:11px;color:var(--t2);white-space:pre-wrap;margin-top:8px">${esc(JSON.stringify(j,null,2))}</pre></div>`;
+  }catch(e){el.innerHTML=`<div class="alert alert-info"><span class="mi">info</span><div>Could not check user realm.</div></div>`;}
+}
+async function doGoogleWS(){
+  if(!document.getElementById('lt-g-ack').checked){alert('Please confirm this domain is in your uploaded files.');return;}
+  const domain=document.getElementById('lt-gdomain').value.trim();if(!domain)return;
+  const el=document.getElementById('lt-g-out');el.innerHTML='<div class="loading"><div class="spinner"></div>Checking MX records via Cloudflare DoH…</div>';
+  try{
+    const r=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=MX`,{headers:{Accept:'application/dns-json'}});
+    const j=await r.json();
+    const mxRecs=j.Answer||[];
+    const googleMX=mxRecs.filter(m=>/google\.com|googlemail\.com|aspmx\.l\.google/i.test(m.data||''));
+    journalAppend('lookup.google_ws',{domain});
+    if(googleMX.length){
+      el.innerHTML=`<div class="alert alert-p"><span class="mi" style="color:var(--p)">check_circle</span><div><b>Google Workspace confirmed</b> for <b>${esc(domain)}</b>. MX records point to Google mail servers: <code style="font-family:var(--mono);font-size:10px">${googleMX.map(m=>esc(m.data)).join(', ')}</code>. This confirms the domain is a Google Workspace customer.</div></div>`;
+    } else if(mxRecs.length){
+      el.innerHTML=`<div class="alert alert-info"><span class="mi" style="color:var(--info)">info</span><div>No Google MX records found for <b>${esc(domain)}</b>. MX records exist but point elsewhere: <code style="font-family:var(--mono);font-size:10px">${mxRecs.slice(0,3).map(m=>esc(m.data)).join(', ')}</code>.</div></div>`;
+    } else {
+      el.innerHTML=`<div class="alert alert-ok"><span class="mi" style="color:var(--ok)">check_circle</span><div>No MX records found for <b>${esc(domain)}</b> — domain does not appear to be a Google Workspace customer.</div></div>`;
+    }
+  }catch(e){el.innerHTML=`<div class="alert alert-info"><span class="mi">info</span><div>Could not verify Google Workspace for ${esc(domain)} via DNS.</div></div>`;}
+}
+async function doOkta(){
+  if(!document.getElementById('lt-okta-ack').checked){alert('Please confirm this subdomain is in your uploaded files.');return;}
+  const sub=document.getElementById('lt-okta-sub').value.trim();if(!sub)return;
+  const el=document.getElementById('lt-okta-out');el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const r=await fetch(`https://${sub}.okta.com/.well-known/okta-organization`,{headers:{Accept:'application/json'}});
+    const j=await r.json();journalAppend('lookup.okta',{sub});
+    el.innerHTML=`<div class="card" style="margin:0"><div class="card-title">Okta Org — ${esc(sub)}.okta.com</div><pre class="mono" style="font-size:11px;color:var(--t2);white-space:pre-wrap;margin-top:8px">${esc(JSON.stringify(j,null,2))}</pre></div>`;
+  }catch(e){el.innerHTML=`<div class="alert alert-info"><span class="mi">info</span><div>Could not reach ${esc(sub)}.okta.com — subdomain may not exist.</div></div>`;}
+}
+async function doOIDC(){
+  if(!document.getElementById('lt-oidc-ack').checked){alert('Please confirm this URL is in your uploaded files.');return;}
+  const baseUrl=document.getElementById('lt-oidc-url').value.trim();if(!baseUrl)return;
+  const el=document.getElementById('lt-oidc-out');el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const url=baseUrl.replace(/\/$/,'')+'/.well-known/openid-configuration';
+    const r=await fetch(url,{headers:{Accept:'application/json'}});
+    const j=await r.json();journalAppend('lookup.oidc',{url});
+    el.innerHTML=`<div class="card" style="margin:0"><div class="card-title">OIDC Config</div><pre class="mono" style="font-size:11px;color:var(--t2);white-space:pre-wrap;margin-top:8px">${esc(JSON.stringify(j,null,2))}</pre></div>`;
+  }catch(e){el.innerHTML=`<div class="alert alert-info"><span class="mi">info</span><div>Could not fetch OIDC configuration from that URL.</div></div>`;}
+}
+
+/* ── FORENSIC (DEEP DEVICE SCAN) ── */
+PAGES.forensic=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">biotech</span>Deep Device Scan — 6 Forensic Modules</div>
+    <div class="card-sub">Paste output from device probe scripts (ADB, PowerShell, manual). Each module parses specific patterns and produces court-ready findings. Run via: adb shell &lt; mdmcheck-probe-android.sh &gt; output.txt</div>
+  </div>
+  <div class="tabs" data-tabs>
+    <button class="tab active" onclick="switchTab(this,'ff1')">F1 — Device Owner</button>
+    <button class="tab" onclick="switchTab(this,'ff2')">F2 — Cert/Proxy</button>
+    <button class="tab" onclick="switchTab(this,'ff3')">F3 — Enrollment DB</button>
+    <button class="tab" onclick="switchTab(this,'ff4')">F4 — ADB Keys</button>
+    <button class="tab" onclick="switchTab(this,'ff5')">F5 — Zero-Touch</button>
+    <button class="tab" onclick="switchTab(this,'ff6')">F6 — Summary</button>
+  </div>
+  ${[
+    ['ff1','F1','Device Owner & Admin Packages','Paste ADB device_owners.xml or pm list packages output','parseF1'],
+    ['ff2','F2','Certificate & Proxy Interception','Paste cacerts-added, security find-certificate, or network settings output','parseF2'],
+    ['ff3','F3','Enrollment Database Strings','Paste output from adb pull or strings against enrollment databases','parseF3'],
+    ['ff4','F4','ADB Authorized Keys','Paste output of /data/misc/adb/adb_keys or adb keys list','parseF4'],
+    ['ff5','F5','Zero-Touch & WPAD Triggers','Paste DHCP options, provisioning logs, or zero_touch_preferences.xml','parseF5'],
+  ].map(([id,num,title,ph,fn],i)=>`
+  <div id="${id}" class="tab-panel ${i===0?'active':''}">
+    <div class="card">
+      <div class="card-title">${num} — ${title}</div>
+      <div class="form-row" style="margin-top:10px">
+        <label>Paste device output</label>
+        <textarea id="${id}-input" placeholder="${ph}" style="height:130px;font-family:var(--mono);font-size:11px"></textarea>
+      </div>
+      <button class="btn-primary btn-sm" onclick="runFModule('${id}',${fn})"><span class="mi mi-sm">search</span>Analyze</button>
+      <div id="${id}-out" style="margin-top:14px"></div>
+    </div>
+  </div>`).join('')}
+  <div id="ff6" class="tab-panel">
+    <div class="card">
+      <div class="card-title">F6 — Cross-Module Summary</div>
+      <div class="card-sub">Aggregates findings from all 5 modules into a single evidence table.</div>
+      <button class="btn-primary btn-sm" style="margin-top:12px" onclick="runF6()"><span class="mi mi-sm">summarize</span>Generate Summary</button>
+      <div id="ff6-out" style="margin-top:14px"></div>
+    </div>
+  </div>`;
+};
+
+function parseF1(text){
+  const findings=[];
+  const deviceOwners=[...text.matchAll(/<item[^>]*>([^<]{5,})<\/item>/gi)];
+  deviceOwners.forEach(m=>{
+    const pkg=m[1].trim();
+    findings.push({severity:'CRITICAL',title:`Device Owner package: ${pkg}`,detail:`'${pkg}' is registered as a Device Owner in device_owners.xml. Device Owner has the highest level of Android management — can silently install any app, factory reset, and enable always-on VPN.`,evidence:m[0].trim().slice(0,300)});
+  });
+  const mgmtPkgs=[...text.matchAll(/package:(com\.[^\s]+)/gi)].filter(m=>/mdm|manage|intune|knox|enterprise|enroll|jamf|airwatch|mobileiron|crowdstrike|sophos|okta|jumpcloud|duo|ivanti|maas360|kandji|citrix|meraki|defender/i.test(m[1]));
+  mgmtPkgs.forEach(m=>findings.push({severity:'HIGH',title:`Management package detected: ${m[1]}`,detail:`Package name matches known MDM/EDR patterns. This app may be a device administrator or have elevated management privileges.`,evidence:m[0]}));
+  const cscProps=[...text.matchAll(/\[ro\.boot\.(hwc|csc|carrier)\]:\s*\[([^\]]+)\]/gi)];
+  cscProps.forEach(m=>findings.push({severity:'MEDIUM',title:`CSC region property: ${m[1]}=${m[2]}`,detail:`CSC (Consumer Software Customization) value '${m[2]}' identifies the device's intended market and carrier configuration. Unexpected values may indicate firmware modification.`,evidence:m[0]}));
+  if(!findings.length)findings.push({severity:'OK',title:'No device owner packages or management apps found',detail:'No device owner XML entries or known management package names detected in this output.'});
+  return{summary:`F1 Device Owner: ${findings.filter(f=>f.severity==='CRITICAL').length} critical`,severity:findings[0]?.severity||'OK',findings};
+}
+function parseF2(text){
+  const findings=[];
+  const certs=[...text.matchAll(/(?:subject=|subj=|label:)[^\n]*(?:Corp|Org|Enterprise|MDM|Management|IT|Internal|CA|Root|Proxy)[^\n]*/gi)];
+  certs.forEach(m=>findings.push({severity:'CRITICAL',title:'Corporate CA certificate detected',detail:'A corporate Certificate Authority is in your trust store. This enables the organization to decrypt all your HTTPS traffic including banking, email, and personal communications.',evidence:m[0].trim().slice(0,300)}));
+  const wpad=[...text.matchAll(/(?:wpad|option 252|ProxyHost|ProxyUrl|proxy\.pac)[^\n]*/gi)];
+  wpad.forEach(m=>findings.push({severity:'HIGH',title:'Network proxy redirect detected',detail:'A WPAD or explicit proxy configuration routes ALL your network traffic through an organization-controlled server. This enables traffic interception and logging.',evidence:m[0].trim()}));
+  const globalProxy=[...text.matchAll(/(?:global.proxy|GlobalProxy|setGlobalProxy)[^\n]*/gi)];
+  globalProxy.forEach(m=>findings.push({severity:'CRITICAL',title:'Global proxy policy detected',detail:'A device-level global proxy (set by Device Owner policy) forces ALL app traffic through the org proxy — regardless of individual app proxy settings.',evidence:m[0].trim()}));
+  if(!findings.length)findings.push({severity:'OK',title:'No foreign certificates or proxy intercepts found',detail:'No corporate CA certificates or proxy redirect configurations detected.'});
+  return{summary:`F2 Cert/Proxy: ${findings.filter(f=>f.severity==='CRITICAL').length} critical`,severity:findings[0]?.severity||'OK',findings};
+}
+function parseF3(text){
+  const findings=[];
+  const enrollTokens=[...text.matchAll(/(?:enrollmentToken|dpcExtras|afwManagementUrl|checkin_url|mdm_url|zerotouchurl|enterpriseId)[^\n]*/gi)];
+  enrollTokens.forEach(m=>findings.push({severity:'CRITICAL',title:'Hidden enrollment instruction found',detail:`Value '${m[0].trim().slice(0,100)}' was found in an internal database. This is evidence the device received management instructions — possibly before you owned it.`,evidence:m[0].trim().slice(0,300)}));
+  const guids=[...text.matchAll(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi)];
+  if(guids.length>0)findings.push({severity:'MEDIUM',title:`${guids.length} organization GUID(s) found in database`,detail:'UUIDs found in enrollment database strings may identify Microsoft tenant IDs or management identifiers.',evidence:guids.slice(0,5).map(m=>m[0]).join('\n')});
+  if(!findings.length)findings.push({severity:'OK',title:'No enrollment tokens or management instructions found',detail:'No enrollment tokens, DPC extras, or zero-touch configuration data detected.'});
+  return{summary:`F3 Enrollment DB: ${findings.filter(f=>f.severity==='CRITICAL').length} critical`,severity:findings[0]?.severity||'OK',findings};
+}
+function parseF4(text){
+  const findings=[];
+  const keys=[...text.matchAll(/(?:RSAPublicKey|AABB(?:[0-9a-f]{4,}))[^\n]*/gi)];
+  if(keys.length)findings.push({severity:'CRITICAL',title:`${keys.length} ADB authorized key(s) found`,detail:'ADB authorized keys on your device allow computers with the matching private key to execute any command on your device without prompting — including installing apps, reading files, and factory resetting.',evidence:keys.slice(0,3).map(m=>m[0]).join('\n')});
+  const multiLines=text.split('\n').filter(Boolean);
+  if(multiLines.length>1&&!keys.length)findings.push({severity:'HIGH',title:`${multiLines.length} ADB key entries found`,detail:'Multiple lines in ADB key file suggest multiple computers have been authorized to control this device.'});
+  if(!findings.length)findings.push({severity:'OK',title:'No unauthorized ADB keys found',detail:'No ADB authorized keys detected in the provided output.'});
+  return{summary:`F4 ADB Keys: ${findings.filter(f=>f.severity==='CRITICAL').length} critical`,severity:findings[0]?.severity||'OK',findings};
+}
+function parseF5(text){
+  const findings=[];
+  const ztUrls=[...text.matchAll(/https?:\/\/[^\s<>"']+(?:oobconfig|zerotouchurl|afwManagementUrl|checkInUrl|dpcExtras)[^\s<>"']*/gi)];
+  ztUrls.forEach(m=>findings.push({severity:'CRITICAL',title:'Zero-Touch enrollment URL found',detail:`Zero-Touch URL '${m[0]}' indicates this device was pre-configured for management — it claimed device ownership before you first turned it on.`,evidence:m[0]}));
+  const wpad2=[...text.matchAll(/(?:wpad|option_252|ProxyHost|ProxyUrl)[^\n]*/gi)];
+  wpad2.forEach(m=>findings.push({severity:'HIGH',title:'WPAD/proxy redirect in provisioning',detail:'Proxy redirect in provisioning data routes all traffic through org-controlled network.',evidence:m[0].trim()}));
+  if(!findings.length)findings.push({severity:'OK',title:'No zero-touch or WPAD triggers found',detail:'No zero-touch enrollment URLs or proxy redirects detected in provisioning data.'});
+  return{summary:`F5 Zero-Touch: ${findings.filter(f=>f.severity==='CRITICAL').length} critical`,severity:findings[0]?.severity||'OK',findings};
+}
+
+function runFModule(tabId,parseFn){
+  const text=document.getElementById(`${tabId}-input`).value.trim();
+  if(!text){alert('Please paste device output first.');return;}
+  const result=parseFn(text);
+  const el=document.getElementById(`${tabId}-out`);
+  const sc={CRITICAL:'alert-critical',HIGH:'alert-warn',OK:'alert-ok',MEDIUM:'alert-info',INFO:'alert-info'};
+  result.findings.forEach(f=>S.findings.push({...f,id:uid(),ts:now(),module:tabId}));
+  S.dualState.phaseA[tabId]=result;
+  save();journalAppend(`forensic.${tabId}`,{severity:result.severity,findings:result.findings.length});
+  el.innerHTML=`
+    <div class="alert ${sc[result.severity]||'alert-info'}">${sevIcon(result.severity)}<div>${esc(result.summary)}</div></div>
+    ${result.findings.map(f=>`
+      <div class="finding-card sev-${f.severity}" onclick="this.querySelector('.finding-body').classList.toggle('open')">
+        <div class="finding-hdr">${sev(f.severity)}<span class="finding-title">${esc(f.title)}</span></div>
+        <div class="finding-body"><div>${esc(f.detail)}</div>${f.evidence?`<div class="finding-evidence">${esc(f.evidence)}</div>`:''}</div>
+      </div>`).join('')}`;
+}
+
+function runF6(){
+  const mods=['ff1','ff2','ff3','ff4','ff5'];
+  const rows=mods.map(m=>{
+    const r=S.dualState.phaseA[m];
+    if(!r)return `<tr><td class="mono">${m.toUpperCase()}</td><td style="color:var(--t3)">Not analyzed yet</td><td>—</td><td>${sev('INFO')}</td></tr>`;
+    const hasCrit=r.findings?.some(f=>f.severity==='CRITICAL');
+    const hasHigh=r.findings?.some(f=>f.severity==='HIGH');
+    return `<tr><td class="mono">${m.toUpperCase()}</td><td style="font-size:11px">${esc(r.summary||'')}</td><td>${r.findings?.length||0} issues</td><td>${sev(hasCrit?'CRITICAL':hasHigh?'HIGH':'OK')}</td></tr>`;
+  });
+  const totalCrit=mods.reduce((n,m)=>n+(S.dualState.phaseA[m]?.findings?.filter(f=>f.severity==='CRITICAL').length||0),0);
+  document.getElementById('ff6-out').innerHTML=`
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Module</th><th>Summary</th><th>Issues</th><th>Result</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+    ${totalCrit>0?`<div class="alert alert-critical" style="margin-top:12px">${sevIcon('CRITICAL')}<div><b>${totalCrit} critical finding${totalCrit>1?'s':''}</b> across all modules. Proceed to <b>DSAR Letters</b> to generate legal correspondence.</div></div>`:''}
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-primary btn-sm" onclick="nav('disclosure')"><span class="mi mi-sm">mail</span>Generate DSAR Letter</button>
+      <button class="btn-secondary btn-sm" onclick="nav('bundle')"><span class="mi mi-sm">inventory_2</span>Export Evidence</button>
+    </div>`;
+  journalAppend('forensic.F6_summary',{modules_analyzed:mods.filter(m=>S.dualState.phaseA[m]).length,critical:totalCrit});
+}
+
+/* ── HIDDEN VS VISIBLE ── */
+PAGES.dual=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-title"><span class="mi" style="color:var(--p)">compare_arrows</span>Hidden vs Visible Check</div>
+    <div class="card-sub"><b>Standard view (Phase A)</b> — what your phone shows via ADB. <b>Privileged view (Phase B)</b> — what Shizuku / root sees. Any discrepancy is a red flag indicating hidden system-level management.</div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Standard View (Phase A)</div>
+      <div class="form-row"><label>App list (adb shell pm list packages -e)</label><textarea id="phaseA-pkgs" placeholder="package:com.android.settings" style="height:110px;font-family:var(--mono);font-size:11px"></textarea></div>
+      <div class="form-row"><label>Device properties (adb shell getprop)</label><textarea id="phaseA-props" placeholder="[ro.boot.hwc]: [US]" style="height:80px;font-family:var(--mono);font-size:11px"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Privileged View (Phase B)</div>
+      <div class="form-row"><label>App list (rish -c 'pm list packages -u -a')</label><textarea id="phaseB-pkgs" placeholder="package:com.android.settings" style="height:110px;font-family:var(--mono);font-size:11px"></textarea></div>
+      <div class="form-row"><label>Device properties (rish -c 'getprop')</label><textarea id="phaseB-props" placeholder="[ro.boot.hwc]: [US]" style="height:80px;font-family:var(--mono);font-size:11px"></textarea></div>
+    </div>
+  </div>
+  <button class="btn-primary" onclick="runDualState()"><span class="mi mi-sm">compare_arrows</span>Compare Standard vs Privileged View</button>
+  <div id="dual-out" style="margin-top:16px"></div>`;
+};
+
+function runDualState(){
+  const aP=new Set((document.getElementById('phaseA-pkgs').value.match(/package:(\S+)/g)||[]).map(s=>s.replace('package:','')));
+  const bP=new Set((document.getElementById('phaseB-pkgs').value.match(/package:(\S+)/g)||[]).map(s=>s.replace('package:','')));
+  const aProps=document.getElementById('phaseA-props').value;
+  const bProps=document.getElementById('phaseB-props').value;
+  const hidden=[...bP].filter(p=>!aP.has(p));
+  const findings=[];
+  hidden.forEach(p=>{const crit=/mdm|manage|intune|knox|work|enterprise|jamf|enroll|mobileiron|airwatch|crowdstrike|sophos/i.test(p);findings.push({severity:crit?'CRITICAL':'HIGH',title:`Hidden app: ${p}`,detail:`'${p}' visible in privileged view but ABSENT from standard view.${crit?' Package name matches management software patterns.':''}`});});
+  aProps.split('\n').filter(Boolean).forEach(line=>{
+    const m=line.match(/\[([^\]]+)\]:\s*\[([^\]]*)\]/);
+    if(m&&bProps.includes(m[1])){
+      const bMatch=bProps.match(new RegExp('\\['+m[1].replace(/\./g,'\\.')+'\\]:\\s*\\[([^\\]]*)\\]'));
+      if(bMatch&&bMatch[1]!==m[2])findings.push({severity:'CRITICAL',title:`Hidden value for: ${m[1]}`,detail:`Standard view: '${m[2]}' | Privileged view: '${bMatch[1]}'. OS reports different value than hardware — possible firmware-level spoofing.`,evidence:`Standard: [${m[2]}]  Privileged: [${bMatch[1]}]`});
+    }
+  });
+  if(!findings.length)findings.push({severity:'OK',title:'No hidden apps or property discrepancies found',detail:'Both standard and privileged views match completely.'});
+  findings.forEach(f=>S.findings.push({...f,id:uid(),ts:now(),module:'DUAL'}));
+  S.dualState.phaseA['dual']=findings;
+  save();journalAppend('forensic.dual_state',{hidden:hidden.length,discrepancies:findings.length});
+  document.getElementById('dual-out').innerHTML=`
+    ${hidden.length?`<div class="alert alert-critical">${sevIcon('CRITICAL')}<div><b>${hidden.length} app${hidden.length!==1?'s':''} hidden from standard view.</b></div></div>`:''}
+    ${findings.map(f=>`<div class="finding-card sev-${f.severity}" onclick="this.querySelector('.finding-body').classList.toggle('open')"><div class="finding-hdr">${sev(f.severity)}<span class="finding-title">${esc(f.title)}</span></div><div class="finding-body"><div>${esc(f.detail)}</div>${f.evidence?`<div class="finding-evidence">${esc(f.evidence)}</div>`:''}</div></div>`).join('')}`;
+}
+
+/* ── DEVICE BRIDGE (WebUSB / ADB) ── */
+PAGES.bridge=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">usb</span>Device Bridge — WebUSB / ADB</div>
+    <div class="card-sub">Connects directly to an Android device via USB using the WebUSB API (Chrome or Edge only). Requires USB debugging enabled on the device.</div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">How to enable USB debugging</div>
+      <div style="font-size:12px;color:var(--t2);line-height:2;margin-top:8px">
+        <div>1. <b>Settings → About Phone</b></div>
+        <div>2. Tap <b>Build Number</b> 7 times → "You are now a developer"</div>
+        <div>3. <b>Settings → Developer Options → Enable USB Debugging</b></div>
+        <div>4. Connect via USB cable and tap <b>Connect Device</b></div>
+        <div>5. Accept the RSA key prompt on your device</div>
+      </div>
+      <button class="btn-primary" style="margin-top:16px" onclick="connectUSB()"><span class="mi mi-sm">usb</span>Connect Device</button>
+      <div id="bridge-status" style="margin-top:12px;font-size:12px;color:var(--t2)"></div>
+    </div>
+    <div class="card" id="bridge-commands" style="display:none">
+      <div class="card-title">Run command on connected device</div>
+      <div class="form-row" style="margin-top:10px">
+        <label>ADB shell command</label>
+        <div class="flex-row">
+          <input id="bridge-cmd" placeholder="getprop ro.boot.hwc" style="flex:1" onkeydown="if(event.key==='Enter')runBridgeCmd()">
+          <button class="btn-primary btn-sm" onclick="runBridgeCmd()"><span class="mi mi-sm">play_arrow</span>Run</button>
+        </div>
+      </div>
+      <pre id="bridge-out" class="mono" style="font-size:11px;color:var(--t2);background:var(--bg3);border-radius:var(--r);padding:12px;margin-top:8px;white-space:pre-wrap;max-height:200px;overflow-y:auto"></pre>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-secondary btn-sm" onclick="runBridgePreset('getprop | grep -iE csc')">CSC</button>
+        <button class="btn-secondary btn-sm" onclick="runBridgePreset('pm list packages -d -e | head -30')">Packages</button>
+        <button class="btn-secondary btn-sm" onclick="runBridgePreset('cat /data/system/device_owners.xml')">Device Owner</button>
+        <button class="btn-secondary btn-sm" onclick="runBridgePreset('cat /data/misc/adb/adb_keys')">ADB Keys</button>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="bridge-terminal" style="display:none">
+    <div class="card-title">Terminal (xterm)</div>
+    <div id="xterm-container"></div>
+  </div>`;
+  // Init xterm
+  setTimeout(()=>{
+    if(window.Terminal){
+      const term=new Terminal({theme:{background:'#000000',foreground:'#3DDC84',cursor:'#3DDC84'},fontSize:12,fontFamily:'Roboto Mono, monospace',cursorBlink:true});
+      const el=document.getElementById('xterm-container');
+      if(el){term.open(el);term.writeln('\x1b[32mMDMCheck Terminal\x1b[0m — connect a device to begin');term.writeln('\x1b[90mType commands above or click presets\x1b[0m');window._term=term;}
+    }
+  },100);
+};
+
+let _usbDevice=null;
+async function connectUSB(){
+  const status=document.getElementById('bridge-status');
+  if(!navigator.usb){status.innerHTML='<span style="color:var(--err)">WebUSB not supported. Use Chrome or Edge desktop.</span>';return;}
+  try{
+    _usbDevice=await navigator.usb.requestDevice({filters:[{classCode:0xff,subclassCode:0x42,protocolCode:1}]});
+    await _usbDevice.open();
+    if(_usbDevice.configuration===null)await _usbDevice.selectConfiguration(1);
+    await _usbDevice.claimInterface(1);
+    status.innerHTML=`<span style="color:var(--ok)">✓ Connected: ${_usbDevice.productName||'Android device'} (${_usbDevice.manufacturerName||'unknown'})</span>`;
+    document.getElementById('bridge-commands').style.display='block';
+    document.getElementById('bridge-terminal').style.display='block';
+    journalAppend('bridge.connected',{product:_usbDevice.productName});
+  }catch(e){status.innerHTML=`<span style="color:var(--err)">Connection failed: ${esc(e.message)}</span>`;}
+}
+async function runBridgeCmd(){
+  const cmd=document.getElementById('bridge-cmd').value.trim();if(!cmd)return;
+  document.getElementById('bridge-out').textContent='Running…';
+  if(!_usbDevice){document.getElementById('bridge-out').textContent='Not connected. Connect a device first.';return;}
+  try{
+    const enc=new TextEncoder();
+    await _usbDevice.transferOut(2,new Uint8Array([0x43,0x4e,0x58,0x4e,...enc.encode('host::'),0]));
+    await new Promise(r=>setTimeout(r,200));
+    await _usbDevice.transferOut(2,new Uint8Array([0x4f,0x50,0x45,0x4e,...enc.encode(`shell:${cmd}`),0]));
+    let out='';
+    for(let i=0;i<50;i++){try{const r=await _usbDevice.transferIn(1,65536);if(r.data?.byteLength>0)out+=new TextDecoder().decode(r.data.buffer);}catch{break;}}
+    document.getElementById('bridge-out').textContent=out||'[No output]';
+    if(window._term)window._term.writeln(`\x1b[33m$ ${cmd}\x1b[0m\n${out}`);
+  }catch(e){document.getElementById('bridge-out').textContent=`Error: ${e.message}\n\nAlternative: run the probe script manually and paste output into Deep Device Scan.`;}
+}
+function runBridgePreset(cmd){document.getElementById('bridge-cmd').value=cmd;runBridgeCmd();}
+
+/* ── MY DEVICES ── */
+PAGES.devices=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div><div class="card-title" style="font-size:15px">My Devices</div><div class="card-sub">Record serial numbers, purchase proof, and ownership confidence score for your devices.</div></div>
+    <button class="btn-primary btn-sm" onclick="document.getElementById('device-form').style.display='block'"><span class="mi mi-sm">add</span>Add Device</button>
+  </div>
+  <div id="device-form" style="display:none" class="card">
+    <div class="card-title" style="margin-bottom:14px">Add a Device</div>
+    <div class="grid2">
+      <div class="form-row"><label>Manufacturer</label><input id="d-mfr" placeholder="Apple, Samsung, Google…"></div>
+      <div class="form-row"><label>Model</label><input id="d-model" placeholder="iPhone 15 Pro, Pixel 8…"></div>
+      <div class="form-row"><label>Identifier type</label><select id="d-idtype"><option>serial</option><option>imei</option><option>udid</option><option>mac</option><option>hwid</option></select></div>
+      <div class="form-row"><label>Identifier value</label><input id="d-idval" placeholder="FVFXQXXXXXXX"></div>
+      <div class="form-row"><label>Purchase date</label><input id="d-date" type="date"></div>
+      <div class="form-row"><label>Where you bought it</label><input id="d-retailer" placeholder="Amazon, Best Buy, Apple Store…"></div>
+      <div class="form-row"><label>How you paid</label><input id="d-pay" placeholder="Visa •4242, PayPal, cash…"></div>
+    </div>
+    <div class="form-row"><label>Notes</label><textarea id="d-notes" placeholder="Any additional context…" style="height:60px"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-primary btn-sm" onclick="addDevice()"><span class="mi mi-sm">save</span>Save</button>
+      <button class="btn-ghost btn-sm" onclick="document.getElementById('device-form').style.display='none'">Cancel</button>
+    </div>
+  </div>
+  <div id="device-list"></div>`;
+  renderDeviceList();
+};
+function addDevice(){
+  const idVal=document.getElementById('d-idval').value.trim();if(!idVal){alert('Please enter an identifier value.');return;}
+  let conf=0;
+  if(idVal.length>=8)conf+=25;
+  if(document.getElementById('d-date').value)conf+=25;
+  if(document.getElementById('d-retailer').value)conf+=25;
+  if(document.getElementById('d-pay').value)conf+=25;
+  const d={id:uid(),manufacturer:document.getElementById('d-mfr').value.trim(),model:document.getElementById('d-model').value.trim(),identifier_type:document.getElementById('d-idtype').value,identifier_value:idVal,purchase_date:document.getElementById('d-date').value,retailer:document.getElementById('d-retailer').value,payment_method:document.getElementById('d-pay').value,notes:document.getElementById('d-notes').value,confidence:conf,created_at:now()};
+  S.devices.push(d);journalAppend('device.added',{id:d.id,identifier_type:d.identifier_type,confidence:conf});save();
+  document.getElementById('device-form').style.display='none';renderDeviceList();
+}
+function renderDeviceList(){
+  const el=document.getElementById('device-list');
+  if(!S.devices.length){el.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--t3)"><span class="mi mi-xl" style="display:block;margin-bottom:8px">devices</span>No devices yet. Add your device above.</div>';return;}
+  el.innerHTML=S.devices.map(d=>`<div class="card">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">${esc(d.manufacturer||'?')} ${esc(d.model||'?')}</div>
+        <div class="mono" style="font-size:11px;color:var(--t2);margin-top:3px">${esc(d.identifier_type)}: ${esc(d.identifier_value)}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">Purchased ${esc(d.purchase_date||'unknown')} from ${esc(d.retailer||'unknown')} via ${esc(d.payment_method||'unknown')}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:24px;font-weight:300;color:${d.confidence>=75?'var(--ok)':d.confidence>=50?'var(--warn)':'var(--err)'}">${d.confidence}%</div>
+        <div style="font-size:10px;color:var(--t3)">ownership confidence</div>
+        <button class="btn-danger btn-sm" style="margin-top:8px" onclick="deleteDevice('${d.id}')"><span class="mi mi-sm">delete</span></button>
+      </div>
+    </div>
+    ${d.notes?`<div style="font-size:12px;color:var(--t2);margin-top:10px;border-top:1px solid var(--div);padding-top:10px">${esc(d.notes)}</div>`:''}
+  </div>`).join('');
+}
+function deleteDevice(id){if(!confirm('Delete this device record?'))return;S.devices=S.devices.filter(d=>d.id!==id);journalAppend('device.deleted',{id});save();renderDeviceList();}
+
+/* ── UPLOADED FILES ── */
+PAGES.audits=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div style="margin-bottom:16px"><div class="card-title" style="font-size:15px">Uploaded Files</div><div class="card-sub">Upload device output, config files, or certificates. Everything is analyzed in your browser — no file content is uploaded externally.</div></div>
+  <div class="card">
+    <label style="display:block;border:2px dashed var(--div2);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;color:var(--t2);transition:border-color .15s" onmouseover="this.style.borderColor='var(--p)'" onmouseout="this.style.borderColor='var(--div2)'" ondragover="event.preventDefault();this.style.borderColor='var(--p)';this.style.background='var(--p-bg)'" ondragleave="this.style.borderColor='var(--div2)';this.style.background=''" ondrop="event.preventDefault();this.style.borderColor='var(--div2)';this.style.background='';handleAuditUpload(event.dataTransfer.files)">
+      <input type="file" multiple id="audit-upload" style="display:none" onchange="handleAuditUpload(this.files)">
+      <span class="mi mi-xl" style="display:block;margin-bottom:8px;color:var(--p)">upload_file</span>
+      <div style="font-size:14px;font-weight:500">Tap or drag to upload files</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:4px">.mobileconfig · .plist · .reg · .csv · .pem · .crt · .xml · .json · .txt · .ps1 · .sh</div>
+    </label>
+    <div class="form-row" style="margin-top:16px"><label>Or paste text content</label><textarea id="audit-paste" placeholder="Paste ADB output, XML, JSON, certificate PEM, registry export…" style="height:100px;font-family:var(--mono);font-size:11px"></textarea></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="audit-paste-name" placeholder="filename.xml" style="flex:1;min-width:160px">
+      <button class="btn-primary btn-sm" onclick="handleAuditPaste()"><span class="mi mi-sm">add</span>Analyze &amp; Save</button>
+    </div>
+  </div>
+  <div id="audit-list"></div>`;
+  renderAuditList();
+};
+async function handleAuditUpload(files){for(const file of files){const text=await file.text();saveAudit(file.name,text);}renderAuditList();}
+function handleAuditPaste(){
+  const text=document.getElementById('audit-paste').value.trim();
+  const name=document.getElementById('audit-paste-name').value.trim()||'pasted.txt';
+  if(!text){alert('Please paste content first.');return;}
+  saveAudit(name,text);document.getElementById('audit-paste').value='';renderAuditList();
+}
+function saveAudit(filename,text){
+  const findings=classifyFileContent(filename,text);
+  const audit={id:uid(),filename,type:detectSourceType(filename),findings,excerpt:text.slice(0,400),size:text.length,created_at:now()};
+  S.audits.push(audit);journalAppend('audit.uploaded',{id:audit.id,filename,type:audit.type,guids:findings.tenantGuids.length,classifications:findings.classifications.length});save();
+}
+function detectSourceType(fn){
+  const f=fn.toLowerCase();
+  if(f.endsWith('.mobileconfig'))return 'Apple Mobileconfig';
+  if(f.endsWith('.plist'))return 'Apple Plist';
+  if(f.endsWith('.reg'))return 'Windows Registry Export';
+  if(f.endsWith('.csv'))return 'CSV — Autopilot/Enrollment';
+  if(f.endsWith('.pem')||f.endsWith('.crt')||f.endsWith('.cer'))return 'Certificate';
+  if(f.endsWith('.xml'))return 'XML Document';
+  if(f.endsWith('.json'))return 'JSON Document';
+  if(f.endsWith('.ps1'))return 'PowerShell Script Output';
+  if(f.endsWith('.sh'))return 'Shell Script';
+  return 'Text File';
+}
+function classifyFileContent(fn,text){
+  const classifications=[];const tenantGuids=[];const mdmUrls=[];
+  const guids=[...text.matchAll(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi)];
+  guids.forEach(m=>tenantGuids.push(m[0]));
+  const urls=[...text.matchAll(/https?:\/\/[a-zA-Z0-9\-\.]+(?:\.awmdm\.com|\.mobileiron\.net|\.jamfcloud\.com|jamf\.com|\.kandji\.io|\.intune\.microsoft\.com|\.manage\.microsoft\.com|\.microsoftonline\.com|\.okta\.com|\.crowdstrike\.com)[^\s"'<>,]*/gi)];
+  urls.forEach(m=>mdmUrls.push(m[0]));
+  if(/PayloadType.*Configuration|ServerURL|PayloadOrganization/i.test(text))classifications.push({category_label:'Apple MDM Profile',management_depth:DEPTH_LABELS.apple_dep});
+  if(/NameSpaceType.*Managed|EnrollmentServiceUrl|TenantId.*[0-9a-f\-]{36}/i.test(text))classifications.push({category_label:'Microsoft Intune / Entra',management_depth:DEPTH_LABELS.domain_intel});
+  if(/device_owner|DeviceOwnerPackageName|Knox|kme/i.test(text))classifications.push({category_label:'Samsung Knox',management_depth:DEPTH_LABELS.samsung_knox});
+  if(/CsFalconService|crowdstrike|falcon_sensor/i.test(text))classifications.push({category_label:'CrowdStrike Falcon EDR',management_depth:DEPTH_LABELS.edr_discovery});
+  if(/SophosAgent|sophos/i.test(text))classifications.push({category_label:'Sophos Endpoint EDR',management_depth:DEPTH_LABELS.edr_discovery});
+  if(/com\.okta|okta\.com/i.test(text))classifications.push({category_label:'Okta Identity Management',management_depth:DEPTH_LABELS.identity_discovery});
+  if(/enrollmentToken|dpcExtras|afwManagementUrl|zerotouchurl/i.test(text))classifications.push({category_label:'Android Zero-Touch / DPC Enrollment',management_depth:DEPTH_LABELS.google_android});
+  return{classifications,tenantGuids,mdmUrls};
+}
+function renderAuditList(){
+  const el=document.getElementById('audit-list');
+  if(!S.audits.length){el.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--t3)"><span class="mi mi-xl" style="display:block;margin-bottom:8px">folder_open</span>No files uploaded yet.</div>';return;}
+  el.innerHTML=S.audits.map(a=>{
+    const f=a.findings||{};
+    const hits=f.classifications?.length||f.tenantGuids?.length||f.mdmUrls?.length;
+    return `<div class="card">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <span class="mi" style="color:${hits?'var(--warn)':'var(--ok)'};font-size:24px;flex-shrink:0">${hits?'warning':'check_circle'}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${esc(a.filename)}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">${esc(a.type)} · ${fmtDate(a.created_at)} · ${Math.round(a.size/1024*10)/10}KB</div>
+          ${f.classifications?.length?`<div style="margin-top:8px">${f.classifications.map(cl=>`<div style="margin-bottom:4px"><div style="font-size:12px;font-weight:500;color:var(--err)">${esc(cl.category_label)}</div><div style="font-size:11px;color:var(--t2)">${esc(cl.management_depth)}</div></div>`).join('')}</div>`:''}
+          ${f.tenantGuids?.length?`<div style="font-size:11px;color:var(--t3);margin-top:4px">${f.tenantGuids.length} organization GUID${f.tenantGuids.length>1?'s':''} found</div>`:''}
+          ${f.mdmUrls?.length?`<div style="font-size:11px;color:var(--t3)">${f.mdmUrls.length} management server URL${f.mdmUrls.length>1?'s':''} found</div>`:''}
+        </div>
+        <button class="btn-danger btn-sm" onclick="deleteAudit('${a.id}')"><span class="mi mi-sm">delete</span></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function deleteAudit(id){if(!confirm('Delete this file?'))return;S.audits=S.audits.filter(a=>a.id!==id);journalAppend('audit.deleted',{id});save();renderAuditList();}
+
+/* ── SCAN SCRIPTS ── */
+PAGES.probes=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">terminal</span>Scan Scripts</div>
+    <div class="card-sub">Download a probe script for your device platform, run it on the device, and upload the output to Uploaded Files for automated analysis.</div>
+  </div>
+  <div class="grid2">
+    ${Object.entries(PROBE_SCRIPTS).map(([k,p])=>`<div class="card">
+      <div class="card-title" style="gap:8px">
+        <span class="mi" style="color:var(--p)">${{android:'android',windows:'laptop_windows',macos:'laptop_mac',ios:'phone_iphone'}[k]||'terminal'}</span>
+        ${{android:'Android (ADB Shell)',windows:'Windows (PowerShell)',macos:'macOS (Bash)',ios:'iPhone / iPad (Manual)'}[k]||k}
+      </div>
+      <div class="card-sub" style="margin:8px 0">${p.mime==='text/plain'?'Manual checklist — iOS restricts automated scripts.':'Run from a terminal on the device you own.'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn-primary btn-sm" onclick="downloadProbe('${k}')"><span class="mi mi-sm">download</span>Download</button>
+        <button class="btn-ghost btn-sm" onclick="previewProbe('${k}')"><span class="mi mi-sm">visibility</span>Preview</button>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div id="probe-preview" style="display:none" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="card-title" id="probe-preview-title">Script</div>
+      <button class="btn-ghost btn-sm" onclick="document.getElementById('probe-preview').style.display='none'"><span class="mi mi-sm">close</span></button>
+    </div>
+    <pre id="probe-preview-code" class="mono" style="font-size:10px;color:var(--t2);white-space:pre-wrap;max-height:320px;overflow-y:auto;background:var(--bg3);border-radius:var(--r);padding:14px"></pre>
+  </div>`;
+};
+function downloadProbe(k){const p=PROBE_SCRIPTS[k];if(p)download(p.filename,p.content,p.mime);}
+function previewProbe(k){const p=PROBE_SCRIPTS[k];if(!p)return;document.getElementById('probe-preview').style.display='block';document.getElementById('probe-preview-title').textContent=p.filename;document.getElementById('probe-preview-code').textContent=p.content;}
+
+/* ── DSAR LETTERS ── */
+PAGES.disclosure=function(){
+  const c=document.getElementById('content');
+  const tmplKeys=Object.keys(TEMPLATES);
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">mail</span>DSAR Letters — Request My Data</div>
+    <div class="card-sub">Pre-filled legal letters demanding organizations disclose or delete your device data. Fill your details once and generate any of the 12 templates.</div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:12px">Your Details (used in all letters)</div>
+    <div class="grid2">
+      <div class="form-row"><label>Your full name</label><input id="dsar-name" placeholder="Alex Smith"></div>
+      <div class="form-row"><label>Your email</label><input id="dsar-email" placeholder="alex@example.com"></div>
+      <div class="form-row"><label>Your postal address</label><input id="dsar-address" placeholder="123 Main St, City, State ZIP"></div>
+      <div class="form-row"><label>Today's date</label><input id="dsar-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+    </div>
+    <div class="form-row"><label>Additional context (what happened, timeline, harm)</label><textarea id="dsar-context" placeholder="Describe what happened…" style="height:80px"></textarea></div>
+  </div>
+  <div class="tabs" data-tabs>
+    <button class="tab active" onclick="switchTab(this,'tmpl-dsar')">Data Access</button>
+    <button class="tab" onclick="switchTab(this,'tmpl-abuse')">Abuse Reports</button>
+    <button class="tab" onclick="switchTab(this,'tmpl-demand')">Demand Letters</button>
+  </div>
+  <div id="tmpl-dsar" class="tab-panel active"><div class="grid2">${tmplKeys.filter(k=>TEMPLATES[k].category==='dsar').map(k=>templateCard(k)).join('')}</div></div>
+  <div id="tmpl-abuse" class="tab-panel"><div class="grid2">${tmplKeys.filter(k=>TEMPLATES[k].category==='abuse'&&!['employer_recovery','apple_activation_lock'].includes(k)).map(k=>templateCard(k)).join('')}</div></div>
+  <div id="tmpl-demand" class="tab-panel"><div class="grid2">${['employer_recovery','apple_activation_lock'].map(k=>templateCard(k)).join('')}</div></div>
+  <div id="dsar-generated" style="margin-top:16px;display:none" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" id="dsar-gen-title">Generated Letter</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-primary btn-sm" onclick="downloadDSAR()"><span class="mi mi-sm">download</span>Download .txt</button>
+        <button class="btn-ghost btn-sm" onclick="document.getElementById('dsar-generated').style.display='none'"><span class="mi mi-sm">close</span></button>
+      </div>
+    </div>
+    <pre id="dsar-gen-content" class="mono" style="font-size:11px;color:var(--t2);white-space:pre-wrap;max-height:400px;overflow-y:auto;background:var(--bg3);border-radius:var(--r);padding:14px"></pre>
+    <div id="dsar-deadline-box" style="margin-top:12px"></div>
+  </div>`;
+};
+
+function templateCard(k){const t=TEMPLATES[k];return `<div class="module-card" onclick="generateTemplate('${k}')"><div class="mc-icon"><span class="mi">${t.category==='dsar'?'description':t.category==='abuse'?'report':'gavel'}</span></div><div class="mc-title">${esc(t.label)}</div><div class="mc-desc">Recipient: ${esc(t.recipient_default)}</div><span class="sev-badge ${t.days<=30?'sev-HIGH':'sev-MEDIUM'}">${t.days}-day deadline</span></div>`;}
+
+function generateTemplate(key){
+  const t=TEMPLATES[key];
+  const name=document.getElementById('dsar-name').value.trim()||'[YOUR NAME]';
+  const email=document.getElementById('dsar-email').value.trim()||'[YOUR EMAIL]';
+  const address=document.getElementById('dsar-address').value.trim()||'[YOUR ADDRESS]';
+  const date=document.getElementById('dsar-date').value||new Date().toISOString().split('T')[0];
+  const context=document.getElementById('dsar-context').value.trim()||'[Additional context required]';
+  const recipient=t.recipient_default||'[RECIPIENT]';
+  const deviceBlock=S.devices.length?S.devices.map(d=>`  • ${d.manufacturer||'?'} ${d.model||'?'} — ${d.identifier_type}: ${d.identifier_value}`).join('\n'):'  [No devices added yet — add under My Devices]';
+  const tenantBlock=S.scanState.findings?.length?[...new Set(S.scanState.findings.map(f=>f.category).map(c=>CAT_LABELS[c]||c))].map(l=>`  • ${l}`).join('\n'):'  [Run MDM Scanner and paste findings here]';
+  const auditBlock=S.audits.length?S.audits.map(a=>`  • ${a.filename} (${a.type})`).join('\n'):'  [No files uploaded yet]';
+  const body=t.body({name,email,address,date,context,recipient,deviceBlock,tenantBlock,auditBlock});
+  document.getElementById('dsar-generated').style.display='block';
+  document.getElementById('dsar-gen-title').textContent=t.label;
+  document.getElementById('dsar-gen-content').textContent=body;
+  const deadline=new Date();deadline.setDate(deadline.getDate()+t.days);
+  document.getElementById('dsar-deadline-box').innerHTML=`<div class="alert alert-info"><span class="mi" style="color:var(--info)">schedule</span><div>Response due by <b>${deadline.toLocaleDateString()}</b> (${t.days} days). <button class="btn-primary btn-sm" style="margin-left:8px" onclick="addDeadlineFromKey('${key}','${deadline.toISOString().split('T')[0]}')">Track Deadline</button></div></div>`;
+  journalAppend('dsar.generated',{key,recipient,days:t.days});
+  document.getElementById('dsar-gen-content').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+let _currentDSAR='';
+function downloadDSAR(){const c=document.getElementById('dsar-gen-content').textContent;download(`mdmcheck-dsar-${Date.now()}.txt`,c,'text/plain');}
+
+/* ── DEADLINE TRACKER ── */
+PAGES.tracker=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div><div class="card-title" style="font-size:15px">Deadline Tracker</div><div class="card-sub">Track legal response deadlines — GDPR (30 days), CCPA (45 days), custom.</div></div>
+    <button class="btn-primary btn-sm" onclick="showAddDeadline()"><span class="mi mi-sm">add</span>Add Deadline</button>
+  </div>
+  <div id="deadline-form" style="display:none" class="card">
+    <div class="card-title" style="margin-bottom:12px">Add a Deadline</div>
+    <div class="grid2">
+      <div class="form-row"><label>Request type</label><input id="dl-type" placeholder="GDPR Art. 15 Request"></div>
+      <div class="form-row"><label>Sent to</label><input id="dl-recipient" placeholder="privacy@company.com"></div>
+      <div class="form-row"><label>Date sent</label><input id="dl-sent" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="form-row"><label>Response due</label><input id="dl-due" type="date"></div>
+    </div>
+    <div class="form-row"><label>Notes</label><textarea id="dl-notes" placeholder="Reference number, follow-up plan…" style="height:60px"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary btn-sm" onclick="addDeadlineManual()"><span class="mi mi-sm">save</span>Save</button>
+      <button class="btn-ghost btn-sm" onclick="document.getElementById('deadline-form').style.display='none'">Cancel</button>
+    </div>
+  </div>
+  <div id="deadline-list"></div>`;
+  renderDeadlineList();
+};
+function showAddDeadline(){document.getElementById('deadline-form').style.display='block';}
+function addDeadlineFromKey(key,date){const label=(TEMPLATES[key]?.label)||key;addDeadline(key,date,label);}
+function addDeadline(key,date,label){
+  const d={id:uid(),key,label,deadline_at:date,sent_at:new Date().toISOString().split('T')[0],recipient:'',status:'pending',notes:'',created_at:now()};
+  S.dispatches.push(d);journalAppend('deadline.added',{id:d.id,label,date});save();
+  if(document.getElementById('deadline-list'))renderDeadlineList();
+}
+function addDeadlineManual(){
+  const d={id:uid(),key:'manual',label:document.getElementById('dl-type').value.trim()||'Custom Request',deadline_at:document.getElementById('dl-due').value,sent_at:document.getElementById('dl-sent').value,recipient:document.getElementById('dl-recipient').value.trim(),status:'pending',notes:document.getElementById('dl-notes').value,created_at:now()};
+  if(!d.deadline_at){alert('Please set a due date.');return;}
+  S.dispatches.push(d);journalAppend('deadline.added',{id:d.id,label:d.label});save();
+  document.getElementById('deadline-form').style.display='none';renderDeadlineList();
+}
+function renderDeadlineList(){
+  const el=document.getElementById('deadline-list');
+  if(!S.dispatches.length){el.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--t3)"><span class="mi mi-xl" style="display:block;margin-bottom:8px">schedule</span>No deadlines tracked yet. Generate a DSAR letter to add one automatically.</div>';return;}
+  const now=new Date();
+  el.innerHTML=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Request</th><th>Recipient</th><th>Due</th><th>Status</th><th>Action</th></tr></thead><tbody>
+    ${S.dispatches.map(d=>{
+      const due=new Date(d.deadline_at);const overdue=due<now&&d.status==='pending';const daysLeft=Math.ceil((due-now)/86400000);
+      return `<tr>
+        <td style="font-weight:500;font-size:12px">${esc(d.label)}</td>
+        <td style="font-size:11px;color:var(--t2)">${esc(d.recipient||'—')}</td>
+        <td style="font-size:11px;font-family:var(--mono);color:${overdue?'var(--err)':daysLeft<7?'var(--warn)':'var(--t2)'}">${esc(d.deadline_at)} ${overdue?'<span class="sev-badge sev-CRITICAL">OVERDUE</span>':daysLeft<=7?`<span class="sev-badge sev-HIGH">${daysLeft}d</span>`:''}</td>
+        <td>${sev(d.status==='complete'?'OK':overdue?'CRITICAL':'MEDIUM')}</td>
+        <td><button class="btn-ghost btn-sm" onclick="markDeadlineDone('${d.id}')">Mark Done</button></td>
+      </tr>`;
+    }).join('')}
+  </tbody></table></div>`;
+}
+function markDeadlineDone(id){const d=S.dispatches.find(x=>x.id===id);if(d)d.status='complete';journalAppend('deadline.completed',{id});save();renderDeadlineList();}
+
+/* ── EXPORT EVIDENCE ── */
+PAGES.bundle=function(){
+  const c=document.getElementById('content');
+  const totalFindings=S.findings.length;const totalAudits=S.audits.length;const totalDevices=S.devices.length;const totalScans=S.scanHistory.length;
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">inventory_2</span>Export Court-Ready Evidence</div>
+    <div class="card-sub">Generates a SHA-256 chained evidence package with all findings, device records, legal letters, and activity log. Each event is hashed to the previous event — creating a tamper-evident chain.</div>
+  </div>
+  <div class="card-row">
+    <div class="stat-card"><div class="stat-val">${totalFindings}</div><div class="stat-lbl">Findings</div></div>
+    <div class="stat-card"><div class="stat-val">${totalDevices}</div><div class="stat-lbl">Devices</div></div>
+    <div class="stat-card"><div class="stat-val">${totalAudits}</div><div class="stat-lbl">Files</div></div>
+    <div class="stat-card"><div class="stat-val">${totalScans}</div><div class="stat-lbl">Scans</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px">Export Options</div>
+    <div class="grid2">
+      <div class="module-card" onclick="exportEvidence('html')">
+        <div class="mc-icon"><span class="mi">html</span></div>
+        <div class="mc-title">HTML Evidence Report</div>
+        <div class="mc-desc">Self-contained HTML file with all evidence, hash chain, and findings formatted for court submission or attorney review.</div>
+      </div>
+      <div class="module-card" onclick="exportEvidence('json')">
+        <div class="mc-icon"><span class="mi">data_object</span></div>
+        <div class="mc-title">JSON Evidence Data</div>
+        <div class="mc-desc">Machine-readable JSON with complete SHA-256 chain. Suitable for forensic analysis tools and expert witness review.</div>
+      </div>
+      <div class="module-card" onclick="exportEvidence('pdf')">
+        <div class="mc-icon"><span class="mi">picture_as_pdf</span></div>
+        <div class="mc-title">PDF (Browser Print)</div>
+        <div class="mc-desc">Opens the evidence report in print mode. Use "Save as PDF" in the print dialog to create a PDF document.</div>
+      </div>
+      <div class="module-card" onclick="exportEvidence('txt')">
+        <div class="mc-icon"><span class="mi">description</span></div>
+        <div class="mc-title">Plain Text Log</div>
+        <div class="mc-desc">Minimal text format for secure messaging, email attachment, or preservation in case management systems.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:12px">SHA-256 Evidence Chain Preview</div>
+    <div id="chain-preview" class="evidence-chain"></div>
+  </div>`;
+  renderChainPreview();
+};
+
+async function renderChainPreview(){
+  const el=document.getElementById('chain-preview');if(!el)return;
+  const events=[...S.journal].slice(-10).reverse();
+  let prevHash='0'.repeat(64);
+  const lines=[];
+  for(const e of events){
+    const data=JSON.stringify({ts:e.ts,type:e.type,prev:prevHash});
+    const h=await sha256(data);prevHash=h;
+    lines.push(`<div class="chain-entry"><span class="chain-hash">${h.slice(0,16)}…</span><span>${esc(e.ts.replace('T',' ').slice(0,19))} — ${esc(e.type)}</span></div>`);
+  }
+  el.innerHTML=lines.join('')||'<div style="color:var(--t3)">No events logged yet.</div>';
+}
+
+async function exportEvidence(format){
+  // Build SHA-256 chain
+  let prevHash='0'.repeat(64);const chainedEvents=[];
+  for(const e of S.journal.slice(-200)){
+    const data=JSON.stringify({ts:e.ts,type:e.type,prev:prevHash});
+    const h=await sha256(data);prevHash=h;
+    chainedEvents.push({...e,hash:h,prev_hash:chainedEvents.length?chainedEvents[chainedEvents.length-1].hash:'0'.repeat(64)});
+  }
+  const evidence={
+    generated_at:now(),version:VERSION,
+    user:{name:S.user?.name||'Guest',email:S.user?.email||'guest@local'},
+    devices:S.devices,audits:S.audits.map(a=>({...a,excerpt:a.excerpt?.slice(0,200)})),
+    findings:S.findings,scan_history:S.scanHistory,dispatches:S.dispatches,
+    journal_chain:chainedEvents,
+    chain_root:chainedEvents[0]?.hash||'no-events',
+    chain_tip:prevHash,
+    disclaimer:'This document was generated by MDMCheck v14.0. All findings are based on automated probes. Consult a licensed attorney before taking legal action. SHA-256 event chain provides tamper-evidence for the activity log.',
+  };
+  if(format==='json'){
+    download(`mdmcheck-evidence-${Date.now()}.json`,JSON.stringify(evidence,null,2),'application/json');
+  }else if(format==='txt'){
+    let txt=`MDMCheck v${VERSION} — Evidence Report\nGenerated: ${evidence.generated_at}\nUser: ${evidence.user.name} <${evidence.user.email}>\n\n`;
+    txt+=`DEVICES (${S.devices.length}):\n${S.devices.map(d=>`  • ${d.manufacturer||'?'} ${d.model||'?'} — ${d.identifier_type}: ${d.identifier_value}`).join('\n')}\n\n`;
+    txt+=`FINDINGS (${S.findings.length}):\n${S.findings.map(f=>`  • [${f.severity||'INFO'}] ${f.title||f.label||'Finding'} — ${f.detail||f.management_depth||''}`).join('\n')}\n\n`;
+    txt+=`EVENT CHAIN (${chainedEvents.length} events):\n${chainedEvents.map(e=>`  ${e.hash.slice(0,16)}… ${e.ts} ${e.type}`).join('\n')}\n\n`;
+    txt+=`Chain root: ${evidence.chain_root}\nChain tip: ${evidence.chain_tip}\n\n${evidence.disclaimer}`;
+    download(`mdmcheck-evidence-${Date.now()}.txt`,txt,'text/plain');
+  }else if(format==='html'){
+    const html=buildHTMLReport(evidence);
+    download(`mdmcheck-evidence-${Date.now()}.html`,html,'text/html');
+  }else if(format==='pdf'){
+    const html=buildHTMLReport(evidence);
+    const w=window.open('','_blank');
+    if(w){w.document.write(html);w.document.close();setTimeout(()=>w.print(),500);}
+  }
+  journalAppend('bundle.exported',{format,events:chainedEvents.length,chain_tip:prevHash.slice(0,16)});
+}
+
+function buildHTMLReport(ev){
+  return`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>MDMCheck Evidence Report</title><style>
+    body{font-family:Arial,sans-serif;font-size:12px;color:#111;max-width:900px;margin:40px auto;padding:0 24px}
+    h1{font-size:20px;border-bottom:2px solid #3DDC84;padding-bottom:8px}
+    h2{font-size:14px;margin-top:24px;border-bottom:1px solid #ddd;padding-bottom:4px}
+    table{width:100%;border-collapse:collapse;margin:12px 0;font-size:11px}
+    th{background:#f5f5f5;padding:6px 8px;text-align:left;border:1px solid #ddd}
+    td{padding:6px 8px;border:1px solid #ddd;vertical-align:top}
+    .hash{font-family:monospace;font-size:10px;color:#555}
+    .sev-CRITICAL{color:#CC0000;font-weight:bold}
+    .sev-HIGH{color:#996600;font-weight:bold}
+    .disclaimer{background:#fff3cd;border:1px solid #ffc107;padding:12px;margin-top:24px;font-size:11px}
+    @media print{body{margin:0}}
+  </style></head><body>
+  <h1>MDMCheck v${VERSION} — Court-Ready Evidence Report</h1>
+  <p><b>Generated:</b> ${esc(ev.generated_at)} &nbsp;|&nbsp; <b>User:</b> ${esc(ev.user.name)} &lt;${esc(ev.user.email)}&gt;</p>
+  <p><b>Chain root:</b> <span class="hash">${esc(ev.chain_root)}</span></p>
+  <p><b>Chain tip:</b> <span class="hash">${esc(ev.chain_tip)}</span></p>
+  <h2>Devices (${ev.devices.length})</h2>
+  <table><tr><th>Manufacturer</th><th>Model</th><th>ID Type</th><th>Identifier</th><th>Purchased</th><th>Confidence</th></tr>
+    ${ev.devices.map(d=>`<tr><td>${esc(d.manufacturer||'?')}</td><td>${esc(d.model||'?')}</td><td>${esc(d.identifier_type)}</td><td>${esc(d.identifier_value)}</td><td>${esc(d.purchase_date||'?')}</td><td>${d.confidence}%</td></tr>`).join('')}
+  </table>
+  <h2>Findings (${ev.findings.length})</h2>
+  <table><tr><th>Severity</th><th>Source</th><th>Title</th><th>Detail</th></tr>
+    ${ev.findings.map(f=>`<tr><td class="sev-${f.severity||'INFO'}">${esc(f.severity||'INFO')}</td><td>${esc(f.module||f.category||'scan')}</td><td>${esc(f.title||f.label||'')}</td><td>${esc(f.detail||f.management_depth||'')}</td></tr>`).join('')}
+  </table>
+  <h2>Scan History (${ev.scan_history.length})</h2>
+  <table><tr><th>Target</th><th>Date</th><th>Findings</th></tr>
+    ${ev.scan_history.map(s=>`<tr><td>${esc(s.target)}</td><td>${esc(s.ts)}</td><td>${s.finding_count||0}</td></tr>`).join('')}
+  </table>
+  <h2>SHA-256 Event Chain (${ev.journal_chain.length} events)</h2>
+  <table><tr><th>Hash</th><th>Timestamp</th><th>Event</th></tr>
+    ${ev.journal_chain.map(e=>`<tr><td class="hash">${esc(e.hash.slice(0,20))}…</td><td>${esc(e.ts||'')}</td><td>${esc(e.type||'')}</td></tr>`).join('')}
+  </table>
+  <div class="disclaimer">${esc(ev.disclaimer)}</div>
+  </body></html>`;
+}
+
+/* ── ORG MAP (D3.js) ── */
+PAGES.orgmap=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">account_tree</span>Organization Map</div>
+    <div class="card-sub">Force-directed graph of all management entities detected in your session. Drag nodes to explore relationships. Run the MDM Scanner first to populate the map.</div>
+  </div>
+  <svg id="orgmap-svg" style="height:520px"></svg>
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+    <button class="btn-secondary btn-sm" onclick="renderOrgMap()"><span class="mi mi-sm">refresh</span>Refresh</button>
+    <button class="btn-secondary btn-sm" onclick="nav('scan')"><span class="mi mi-sm">radar</span>Run Scanner</button>
+  </div>`;
+  renderOrgMap();
+};
+
+function renderOrgMap(){
+  const svg=document.getElementById('orgmap-svg');if(!svg||!window.d3)return;
+  const W=svg.clientWidth||800,H=520;
+  d3.select(svg).selectAll('*').remove();
+  const isDark=document.documentElement.classList.contains('light')?false:true;
+  const colors={apple_dep:'#32C8FF',domain_intel:'#4285F4',samsung_knox:'#1428A0',mdm_discovery:'#FBBC04',google_android:'#34A853',edr_discovery:'#EA4335',identity_discovery:'#9C27B0'};
+
+  // Build nodes and links from scan findings
+  const nodes=[{id:'device',label:'Your Device',type:'device',r:22}];
+  const links=[];
+  const seen=new Set();
+
+  S.scanState.findings?.forEach(f=>{
+    if(!seen.has(f.category)){
+      seen.add(f.category);
+      const nid='cat_'+f.category;
+      nodes.push({id:nid,label:CAT_LABELS[f.category]||f.category,type:'category',color:colors[f.category]||'#9AA0A6',r:16});
+      links.push({source:'device',target:nid});
+    }
+    const fid='find_'+f.key;
+    nodes.push({id:fid,label:f.label.slice(0,30),type:'finding',color:colors[f.category]||'#9AA0A6',r:8,finding:f});
+    links.push({source:'cat_'+f.category,target:fid});
+    if(f.intel){
+      Object.entries(f.intel).forEach(([k,v])=>{
+        const iid='intel_'+f.key+'_'+k;
+        nodes.push({id:iid,label:`${k}: ${String(v).slice(0,20)}`,type:'intel',r:6,color:'#3DDC84'});
+        links.push({source:fid,target:iid});
+      });
+    }
+  });
+
+  if(nodes.length<2){
+    d3.select(svg).append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle').attr('fill','#5F6368').text('No findings yet — run the MDM Scanner first.');
+    return;
+  }
+
+  const sim=d3.forceSimulation(nodes)
+    .force('link',d3.forceLink(links).id(d=>d.id).distance(90))
+    .force('charge',d3.forceManyBody().strength(-220))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('collision',d3.forceCollide(d=>d.r+12));
+
+  const dsvg=d3.select(svg);
+  const g=dsvg.append('g');
+
+  dsvg.call(d3.zoom().scaleExtent([.3,3]).on('zoom',e=>g.attr('transform',e.transform)));
+
+  const link=g.append('g').selectAll('line').data(links).join('line').attr('class','org-link');
+  const node=g.append('g').selectAll('g').data(nodes).join('g').attr('class','org-node').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+
+  node.append('circle').attr('r',d=>d.r).attr('fill',d=>d.type==='device'?'#3DDC84':d.color||'#5F6368').attr('stroke',isDark?'#1A1A1A':'#fff').attr('stroke-width',2).attr('opacity',.85);
+  node.append('text').attr('class','org-label').attr('dy',d=>d.r+14).attr('text-anchor','middle').text(d=>d.label.slice(0,25));
+
+  node.on('mouseover',(e,d)=>{
+    const t=document.getElementById('org-tooltip');
+    if(t){t.style.display='block';t.style.left=(e.pageX+12)+'px';t.style.top=(e.pageY-10)+'px';
+      t.innerHTML=`<b>${esc(d.label)}</b><br><span style="color:var(--t3)">${esc(d.type)}</span>${d.finding?.management_depth?`<br>${esc(d.finding.management_depth)}`:''}`;
+    }
+  }).on('mouseout',()=>{const t=document.getElementById('org-tooltip');if(t)t.style.display='none';});
+
+  sim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+}
+
+/* ── FIRMWARE ── */
+PAGES.firmware=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="mi" style="color:var(--p)">system_update</span>Firmware Tools</div>
+    <div class="card-sub">Links and instructions for official device firmware tools. Flashing stock firmware removes MDM profiles, root backdoors, and Knox flags — but will erase all data.</div>
+  </div>
+  <div class="alert alert-warn"><span class="mi" style="color:var(--warn)">warning</span><div><b>Warning:</b> Flashing firmware erases all data. Back up everything first. Only flash official firmware from the device manufacturer. This does NOT remove Activation Lock or Knox Guard — those require carrier/manufacturer intervention.</div></div>
+  ${[
+    {name:'Android Flash Tool',icon:'android',url:'https://flash.android.com',desc:'Official Google tool to flash Pixel firmware over WebUSB. Supports Pixel 3 and later. Unlocks bootloader, flashes factory images.',badge:'Google Official'},
+    {name:'Samsung Odin / Smart Switch',icon:'phone_android',url:'https://www.samsung.com/us/support/downloads/',desc:'Samsung Smart Switch for firmware restoration. Odin (Windows) for advanced flashing. Resets Knox warranty counters.',badge:'Samsung Official'},
+    {name:'Apple Configurator 2',icon:'phone_iphone',url:'https://apps.apple.com/app/apple-configurator-2/id1037126344',desc:'Restores iPhones to stock firmware via DFU mode. Removes MDM profiles but not Activation Lock (requires Apple ID or DSAR).',badge:'Apple Official'},
+    {name:'MIUI / Xiaomi Flash Tool',icon:'phone_android',url:'https://xiaomifirmwareupdater.com',desc:'Community-maintained Xiaomi firmware archive. Official MIUI flasher for Mi and Poco devices.',badge:'Community'},
+    {name:'OnePlus / OxygenOS Flash',icon:'phone_android',url:'https://community.oneplus.com/thread',desc:'OxygenOS full ROM downloads and local upgrade instructions via Recovery.',badge:'OnePlus Official'},
+  ].map(fw=>`<div class="fw-card" onclick="window.open('${fw.url}','_blank','noopener')">
+    <div class="fw-icon"><span class="mi">${fw.icon}</span></div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:600">${esc(fw.name)}</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px;line-height:1.6">${esc(fw.desc)}</div>
+    </div>
+    <div>
+      <span class="sev-badge sev-INFO">${esc(fw.badge)}</span>
+      <span class="mi mi-sm" style="color:var(--t3);display:block;margin-top:8px;text-align:right">open_in_new</span>
+    </div>
+  </div>`).join('')}
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">After Flashing — Next Steps</div>
+    <div style="font-size:12px;color:var(--t2);line-height:2;margin-top:8px">
+      <div>1. <b>Re-run MDM Scanner</b> on your email domain to confirm management infrastructure still exists at the org level.</div>
+      <div>2. <b>Check DNS records</b> — Autopilot and Knox E-FOTA will re-enroll if the org retains your device serial number.</div>
+      <div>3. <b>Send DSAR letters</b> demanding removal of your hardware identifiers from all enrollment databases.</div>
+      <div>4. If Apple Activation Lock persists: submit the Apple DSAR template with proof of purchase.</div>
+      <div>5. If Knox Guard persists: contact Samsung Knox Enterprise Helpdesk — only the organization can release it.</div>
+    </div>
+  </div>`;
+};
+
+/* ── SCAN HISTORY ── */
+PAGES.history=function(){
+  const c=document.getElementById('content');
+  const loadServerHistory=async()=>{
+    if(S.user&&S.user.email!=='guest@local'){
+      try{
+        const r=await fetch(`${API_BASE}/history`,{headers:apiHeaders()});
+        if(r.ok){const j=await r.json();if(j.scans?.length)return j.scans;}
+      }catch{}
+    }
+    return S.scanHistory;
+  };
+  c.innerHTML='<div class="loading"><div class="spinner"></div>Loading history…</div>';
+  loadServerHistory().then(scans=>{
+    if(!scans?.length){c.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--t3)"><span class="mi mi-xl" style="display:block;margin-bottom:8px">history</span>No scans yet. Run the MDM Scanner to create history.</div>';return;}
+    c.innerHTML=`<div style="margin-bottom:16px"><div class="card-title" style="font-size:15px">Scan History</div><div class="card-sub">${scans.length} scan${scans.length>1?'s':''} recorded in this session${S.user?.email!=='guest@local'?' and on server':' (local only — sign in to persist)'}.</div></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Target</th><th>Domain</th><th>Date</th><th>Findings</th><th>Confidence</th></tr></thead><tbody>
+      ${scans.map(s=>`<tr>
+        <td style="font-weight:500;font-size:12px">${esc(s.target)}</td>
+        <td style="font-size:11px;color:var(--t2)">${esc(s.target_type||'')}</td>
+        <td style="font-size:11px;font-family:var(--mono)">${fmtDate(s.created_at||s.ts)}</td>
+        <td style="font-weight:500;color:${(s.finding_count||s.hits||0)>0?'var(--warn)':'var(--ok)'}">${s.finding_count||s.hits||0}</td>
+        <td class="mono" style="font-size:11px">${s.confidence||'—'}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+  });
+};
+
+/* ── ACTIVITY LOG ── */
+PAGES.journal=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div><div class="card-title" style="font-size:15px">Activity Log</div><div class="card-sub">${S.journal.length} events logged this session.</div></div>
+    <button class="btn-secondary btn-sm" onclick="downloadJournal()"><span class="mi mi-sm">download</span>Export</button>
+  </div>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Event</th><th>Details</th></tr></thead><tbody>
+    ${S.journal.slice(-100).reverse().map(e=>`<tr>
+      <td class="mono" style="font-size:10px;white-space:nowrap">${fmtDate(e.ts)}</td>
+      <td style="font-size:11px;font-weight:500">${esc(e.type)}</td>
+      <td style="font-size:11px;color:var(--t2)">${esc(Object.entries(e).filter(([k])=>!['id','ts','type'].includes(k)).map(([k,v])=>`${k}=${JSON.stringify(v)}`).join(' · '))}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+};
+
+/* ── TOS ── */
+PAGES.tos=function(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="card">
+    <div class="card-title" style="margin-bottom:12px"><span class="mi" style="color:var(--p)">gavel</span>Terms of Service — MDMCheck v${VERSION}</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:16px">Effective January 1, 2025 · Last updated May 2026</div>
+    ${[
+      ['1. Acceptance','By using MDMCheck you agree to these Terms in full. If you do not agree, do not use the Platform.'],
+      ['2. Authorized Use Only','<b>You may only use MDMCheck on devices, domains, and accounts you personally own or have explicit written authorization to access.</b> Unauthorized use against third-party systems may violate 18 U.S.C. § 1030 (CFAA), 18 U.S.C. § 2511 (ECPA), the Computer Misuse Act, and other laws.'],
+      ['3. No Legal Advice','All templates, letters, findings, and outputs are for informational and drafting purposes only. Nothing constitutes legal advice. Consult a licensed attorney before taking legal action.'],
+      ['4. No Warranty','The Platform is provided "AS IS." We make no warranty that results are accurate, complete, or legally sufficient for any purpose.'],
+      ['5. Limitation of Liability','TO THE FULLEST EXTENT PERMITTED BY LAW, THE OPERATOR\'S TOTAL LIABILITY SHALL NOT EXCEED $50.00 USD. We are not liable for indirect, consequential, or punitive damages of any kind.'],
+      ['6. Intellectual Property','All code, design, templates, probe logic, and DSAR template text are © 2025–2026 MDMCheck / sectrollz. Unauthorized reproduction, redistribution, or commercial use is strictly prohibited and may result in civil and criminal liability.'],
+      ['7. Privacy & Data Handling','Network probes contact third-party MDM infrastructure endpoints — this is inherent to the tool\'s function. DNS queries use Cloudflare DoH (1.1.1.1). Tenant lookups contact Microsoft, Google, Okta, and other identity providers. We do not use cookies or tracking pixels in the client interface.'],
+      ['8. Indemnification','You agree to indemnify and hold the Operator harmless from any claims arising from your use, misuse, or unauthorized use of the Platform or its outputs.'],
+      ['9. Governing Law','These Terms are governed by the laws of the State of Delaware, USA. Disputes shall be resolved by binding individual arbitration under AAA Consumer Rules; class actions are waived.'],
+      ['10. Contact','IllegalDeviceManagementPool@gmail.com · github.com/sectrollz'],
+    ].map(([h,b])=>`<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--div)"><div style="font-weight:600;margin-bottom:6px">${esc(h)}</div><div style="font-size:12px;color:var(--t2);line-height:1.7">${b}</div></div>`).join('')}
+    <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:8px">© 2025–2026 MDMCheck · All Rights Reserved · github.com/sectrollz</div>
+  </div>`;
+};
+
+function showTosModal(){
+  const m=document.getElementById('tos-modal');
+  const ct=document.getElementById('tos-modal-content');
+  ct.innerHTML=`
+    ${[['1. Acceptance','By using MDMCheck you agree to these Terms in full.'],['2. Authorized Use Only','You may only scan devices and domains you personally own or have explicit written authorization to access.'],['3. No Legal Advice','All templates are for informational purposes only. Consult an attorney before taking legal action.'],['4. No Warranty','Provided "AS IS" — no warranty of accuracy or completeness.']].map(([h,b])=>`<div style="margin-bottom:10px"><b>${esc(h)}</b><br>${esc(b)}</div>`).join('')}
+    <div style="margin-top:12px;font-size:11px;color:var(--t3)">© 2025–2026 MDMCheck · Full TOS available in the app under Terms of Service</div>`;
+  m.style.display='flex';
+}
+
+/* ── STATUS BAR ── */
+function setStatus(msg,color='var(--t3)'){
+  const el=document.getElementById('status-text');if(el)el.textContent=msg;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE SIDEBAR
+═══════════════════════════════════════════════════════ */
+function handleOAuthLink(e){
+  if(!_hasBackend){
+    e.preventDefault();
+    if(confirm('OAuth sign-in requires the MDMCheck backend API, which is not available on this static deployment.\n\nContinue as Guest for full local functionality (DNS Check, Forensics, DSAR Letters, Evidence Export all work without a backend)?')){
+      guestLogin();
+    }
+    return false;
+  }
+  return true;
+}
+
+function downloadJournal(){
+  download('mdmcheck-journal-'+Date.now()+'.json',JSON.stringify(S.journal,null,2),'application/json');
+}
+
+function handleResize(){
+  const mb=document.getElementById('menu-btn');
+  const sb=document.getElementById('sidebar');
+  const mn=document.getElementById('mobile-nav');
+  if(window.innerWidth<768){
+    if(mb)mb.style.display='flex';
+    if(sb)sb.style.display='none';
+    if(mn)mn.style.display='flex';
+  }else{
+    if(mb)mb.style.display='none';
+    if(sb)sb.style.display='flex';
+    if(sb)sb.style.flexDirection='column';
+    if(mn)mn.style.display='none';
+  }
+}
+window.addEventListener('resize',handleResize);
+window.addEventListener('load',handleResize);
+</script>
+</body>
+</html>
